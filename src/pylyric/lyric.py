@@ -9,7 +9,7 @@ token_url = "https://api.honeywell.com/oauth2/token"
 
 
 class Lyric:
-
+    """A client for managing Honeywell 'Lyric' devices"""
     def __init__(self):
         config_file = os.path.join((os.path.abspath(os.path.dirname(__file__))), "auth.json")
         with open(config_file) as json_file:
@@ -24,7 +24,7 @@ class Lyric:
             self.refresh_token = config_data['tokens']['refresh_token']
 
     def _get_authorisation_code(self):
-        """get authorisation code to access authorisation tokens"""
+        """Get an authorisation code to access authorisation tokens"""
         auth_request_url = "{}?response_type=code&client_id={}&redirect_uri={}".format(auth_url, self.client_id,
                                                                                        self.redirect_url)
 
@@ -39,7 +39,8 @@ class Lyric:
         return code
 
     def get_tokens(self):
-        """get and print access tokens"""
+        """Get access tokens.
+           This requires user to open the browser and supply a url at the prompt"""
         authorisation_code = self._get_authorisation_code()
         data = {
             "grant_type": "authorization_code",
@@ -47,6 +48,7 @@ class Lyric:
             "redirect_uri": self.redirect_url
         }
         r = requests.post(token_url, auth=HTTPBasicAuth(self.client_id, self.client_secret), data=data)
+
         if r.status_code == 200:
             tokens = r.json()
             self.access_token = tokens["access_token"]
@@ -59,27 +61,16 @@ class Lyric:
         """Refresh authorisation token"""
         data = {
             "grant_type": "refresh_token",
-            "refresh_token": self.refresh_token}
-
+            "refresh_token": self.refresh_token
+        }
         r = requests.post(token_url, auth=HTTPBasicAuth(self.client_id, self.client_secret), data=data)
+
         if r.status_code == 200:
             self.access_token = r.json()['access_token']
             print("> Refreshed access token: {}".format(self.access_token))
         else:
             raise ValueError("Couldn't refresh token: {}".format(r.json()))
 
-    def refresh(self):
-        """Refresh access token"""
-        api_url = "https://api.honeywell.com/oauth2/token"
-        data = {
-            "grant_type": "refresh_token",
-            "refresh_token": self.refresh_token
-        }
-        r = requests.post(api_url, auth=HTTPBasicAuth(self.client_id, self.client_secret), data=data)
-        if r.status_code == 200:
-            self.access_token = r.json()['access_token']
-        else:
-            raise ValueError("Couldn't refresh token")
 
     @property
     def locations(self):
