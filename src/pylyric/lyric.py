@@ -3,13 +3,14 @@ import os
 import re
 import requests
 from requests.auth import HTTPBasicAuth
+from pylyric.device import Device
 
 auth_url = "https://api.honeywell.com/oauth2/authorize"
 token_url = "https://api.honeywell.com/oauth2/token"
 
-
 class Lyric:
     """A client for managing Honeywell 'Lyric' devices"""
+
     def __init__(self):
         config_file = os.path.join((os.path.abspath(os.path.dirname(__file__))), "auth.json")
         with open(config_file) as json_file:
@@ -22,6 +23,9 @@ class Lyric:
             # token data
             self.access_token = config_data['tokens']['access_token']
             self.refresh_token = config_data['tokens']['refresh_token']
+
+        self.refresh_tokens()
+
 
     def _get_authorisation_code(self):
         """Get an authorisation code to access authorisation tokens"""
@@ -53,7 +57,6 @@ class Lyric:
             tokens = r.json()
             self.access_token = tokens["access_token"]
             self.refresh_token = tokens["refresh_token"]
-            print("> Got tokens")
         else:
             raise ValueError("Couldn't get token: {}".format(r.json()))
 
@@ -64,57 +67,47 @@ class Lyric:
             "refresh_token": self.refresh_token
         }
         r = requests.post(token_url, auth=HTTPBasicAuth(self.client_id, self.client_secret), data=data)
-
         if r.status_code == 200:
             self.access_token = r.json()['access_token']
             print("> Refreshed access token: {}".format(self.access_token))
         else:
             raise ValueError("Couldn't refresh token: {}".format(r.json()))
 
-
     @property
     def locations(self):
-        api_url = "https://api.honeywell.com/v2/locations"
-        headers = {"Authorization": "Bearer sKnEGqauCniWNA1i2XUM5GwTPT4b"}
-        params = {"apikey": self.api_key}
-        r = requests.get(api_url, headers=headers, params=params)
+        locations_url = "https://api.honeywell.com/v2/locations"
+        headers = {"Authorization": "Bearer {}".format(self.access_token)}
+        params = {"apikey": self.client_id}
+
+        r = requests.get(locations_url, headers=headers, params=params)
         if r.status_code == 200:
             return r.json()
         else:
-            raise ValueError("Couldn't get locations")
+            raise ValueError("Couldn't get locations: {}".format(r.json()))
 
-    def dummy(self):
-        data = [{'locationID': 199754, 'name': 'Kingswood', 'streetAddress': '13A Clermiston Road North',
-                 'city': 'Edinburgh', 'country': 'Canada', 'zipcode': 'EH4 7BL', 'devices': [
-                {'displayedOutdoorHumidity': 86, 'vacationHold': {'enabled': False},
-                 'currentSchedulePeriod': {'day': 'Monday', 'period': 'P4'},
-                 'scheduleCapabilities': {'availableScheduleTypes': ['None', 'Geofenced', 'TimedEmea'],
-                                          'schedulableFan': False},
-                 'scheduleType': {'scheduleType': 'Timed', 'scheduleSubType': 'EMEA'}, 'scheduleStatus': 'Resume',
-                 'allowedTimeIncrements': 10, 'settings': {'hardwareSettings': {'brightness': 2, 'maxBrightness': 5},
-                                                           'temperatureMode': {'air': True}, 'specialMode': {}},
-                 'deviceClass': 'Thermostat', 'deviceType': 'Thermostat', 'deviceID': 'LCC-00D02DB6B4A8',
-                 'userDefinedDeviceName': 'Lyric T6 Thermostat', 'name': 'Lyric T6 Thermostat', 'isAlive': True,
-                 'isUpgrading': False, 'isProvisioned': True, 'macID': '00D02DB6B4A8', 'deviceSettings': {},
-                 'units': 'Celsius', 'indoorTemperature': 22, 'outdoorTemperature': 3, 'allowedModes': ['Heat', 'Off'],
-                 'deadband': 0, 'hasDualSetpointStatus': False, 'minHeatSetpoint': 5, 'maxHeatSetpoint': 35,
-                 'minCoolSetpoint': -18, 'maxCoolSetpoint': -18,
-                 'changeableValues': {'mode': 'Heat', 'heatSetpoint': 16, 'coolSetpoint': 10,
-                                      'thermostatSetpointStatus': 'NoHold', 'nextPeriodTime': '06:30:00',
-                                      'endHeatSetpoint': 16, 'endCoolSetpoint': 10, 'heatCoolMode': 'Heat'},
-                 'operationStatus': {'mode': 'EquipmentOff', 'fanRequest': False, 'circulationFanRequest': False}}],
-                 'users': [{'userID': 237054, 'username': 'richardlyon@fastmail.com', 'firstname': 'Richard',
-                            'lastname': 'Lyon', 'created': 1489517333, 'deleted': -62135596800, 'activated': True,
-                            'connectedHomeAccountExists': True, 'locationRoleMapping': [
-                         {'locationID': 199754, 'role': 'Adult', 'locationName': 'Kingswood', 'status': 1}],
-                            'isCurrentUser': True},
-                           {'userID': 319625, 'username': 'arlyon@me.com', 'firstname': 'Alexander', 'lastname': 'Lyon',
-                            'created': 1497089136, 'deleted': -62135596800, 'activated': True,
-                            'connectedHomeAccountExists': True, 'locationRoleMapping': [
-                               {'locationID': 199754, 'role': 'Adult', 'locationName': 'Kingswood', 'status': 1}],
-                            'isCurrentUser': False}], 'timeZone': 'GMT Standard Time', 'ianaTimeZone': 'Europe/London',
-                 'daylightSavingTimeEnabled': True, 'geoFences': [
-                {'geoFenceID': 202528, 'latitude': 55.96083, 'longitude': -3.28103781, 'radius': 500,
-                 'geoOccupancy': {'withinFence': 0, 'outsideFence': 1}}], 'geoFenceEnabled': True,
-                 'geoFenceNotificationEnabled': True}]
-        return data
+    def devices(self, locationID):
+        devices_url = "https://api.honeywell.com/v2/devices"
+        headers = {"Authorization": "Bearer {}".format(self.access_token)}
+        params = {"apikey": self.client_id, "locationId": self.locations[0]['locationID']}
+
+        r = requests.get(devices_url, headers=headers, params=params)
+        if r.status_code == 200:
+            return [Device(client=self, json=json) for json in r.json()]
+            # return r.json()
+        else:
+            raise ValueError("Couldn't get devices: {}".format(r.json()))
+
+    def device(self, deviceID):
+        device_url = "https://api.honeywell.com/v2/devices/thermostats/{}".format(deviceID)
+        headers = {"Authorization": "Bearer {}".format(self.access_token)}
+        params = {
+            "apikey": self.client_id,
+            "locationId": self.locations[0]['locationID']
+            }
+        r = requests.get(device_url, headers=headers, params=params)
+        if r.status_code == 200:
+            return r.json()
+            # return r.json()
+        else:
+            raise ValueError("Couldn't set device: {}".format(r.json()))
+
