@@ -1,26 +1,13 @@
 from pylyric.oauth2 import LyricClientCredentials
-import datetime
-
-data = {
-    "client": {
-        "client_id": "2IvMPqBmBBDhl3vBWVbCs4IvqjfQ9AUZ",
-        "client_secret": "lmVks7zDAdyoRQOT",
-        "api_key": "v4M5vCGGt0F6tMwxwb2ac5UGENegSS4H",
-        "redirect_url": "kingswood"
-    },
-    "tokens": {
-        "access_token": "AZJyWOGjxUVtpGQ2w7jNA9EdWu8O",
-        "refresh_token": "G84Tia8JeST2ELVBqWQWRdZ4cQuqWKZM"
-    }
-}
+import pylyric.config as cfg
 
 lcc = LyricClientCredentials(
-        client_id=data['client']['client_id'],
-        client_secret=data['client']['client_secret'],
-        api_key=data['client']['api_key'],
-        access_token=data['tokens']['access_token'],
-        refresh_token=data['tokens']['refresh_token'],
-        redirect_url=data['client']['redirect_url']
+        client_id=cfg.CLIENT_ID,
+        client_secret=cfg.CLIENT_SECRET,
+        api_key=cfg.API_KEY,
+        access_token=cfg.ACCESS_TOKEN,
+        refresh_token=cfg.REFRESH_TOKEN,
+        redirect_url=cfg.REDIRECT_URL
 )
 
 

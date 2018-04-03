@@ -1,8 +1,6 @@
-from flask import Flask, jsonify
 from pylyric.lyric import Lyric
+from pylyric.oauth2 import LyricClientCredentials
 import pylyric.config as cfg
-
-app = Flask(__name__)
 
 lcc = LyricClientCredentials(
         client_id=cfg.CLIENT_ID,
@@ -16,18 +14,24 @@ lcc = LyricClientCredentials(
 lyric = Lyric(client_credentials_manager=lcc)
 locationID = lyric.locations()[0]['locationID']
 deviceID = lyric.locations()[0]['devices'][0]['deviceID']
-
 device = lyric.device(locationID, deviceID)
 
-@app.route('/')
-def index():
-    return "Hello, World!"
+
+def test_allowed_modes():
+    assert isinstance(device.allowedModes, list)
 
 
-@app.route('/lyric/api/v1.0/indoortemperature', methods=['GET'])
-def get_indoortemperature():
-    return jsonify({'indoorTemperature': d.indoorTemperature})
+def test_change_device():
+    current_state = device.changeableValues
+    old_mode = current_state['mode']
 
+    if old_mode == "Off":
+        new_mode = "Heat"
+    else:
+        new_mode = "Off"
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    device.change(mode=new_mode)
+    assert device.changeableValues['mode'] == new_mode
+
+    device.change(mode=old_mode)
+    assert device.changeableValues['mode'] == old_mode

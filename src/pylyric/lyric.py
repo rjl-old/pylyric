@@ -1,5 +1,6 @@
 import requests
 import json
+from pylyric.device import Device
 
 
 class LyricException(Exception):
@@ -107,7 +108,9 @@ class Lyric:
         :return: list of dict
         """
         params = {"locationId": locationID}
-        return self._get('devices', params)
+        devices = self._get('devices', params)
+        return [Device(client=self, json=json, locationID=locationID) for json in devices]
+        # return self._get('devices', params)
 
     def device(self, locationID, deviceID):
         """
@@ -117,7 +120,8 @@ class Lyric:
         """
         url = "devices/thermostats/{}".format(deviceID)
         params = {"locationId": locationID}
-        return self._get(url, params)
+        json = self._get(url, params)
+        return Device(client=self, json=json, locationID=locationID)
 
     def change_device(self, locationID, deviceID, **kwargs):
         """
