@@ -1,15 +1,12 @@
 =======
-pylyric
+pylyric - a python client for the Honeywell 'Lyric' thermostat
 =======
-
-
-Add a short description here!
 
 
 Description
 ===========
 
-A longer description of your project goes here...
+pylyric is a thin client for the Honeywell 'Lyric' thermostat
 
 
 Note
