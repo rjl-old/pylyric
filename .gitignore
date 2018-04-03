@@ -47,3 +47,6 @@ venv
 dev/*
 dev/getlyricids.py
 dev/lyric.py
+
+# Config
+pylyric/config.py
