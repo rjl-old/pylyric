@@ -1,7 +1,8 @@
 from pylyric.lyric import Lyric
-import pytest
+from pylyric.device import Device
 
 client = Lyric()
+
 
 def test_initialisation():
     # client = Lyric()
@@ -19,9 +20,13 @@ def test_refresh_token():
     assert client.access_token != t
 
 
-def test_get_location():
-    assert isinstance(client.locations[0]['locationID'], int)
+def test_locations():
+    assert isinstance(client.locations, list)
+    assert isinstance(client.locations[0], dict)
+    assert 'locationID' in client.locations[0]
 
 
-def test_get_devices():
-    assert isinstance(client.devices(locationID=199754)[0]['deviceID'], str)
+def test_devices():
+    locationID = client.locations[0]['locationID']
+    assert isinstance(client.devices(locationID), list)
+    assert isinstance(client.devices(locationID)[0], Device)
