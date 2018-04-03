@@ -1,144 +1,139 @@
-import json
-import os
-import re
 import requests
-from requests.auth import HTTPBasicAuth
-from pylyric.device import Device
+import json
 
-auth_url = "https://api.honeywell.com/oauth2/authorize"
-token_url = "https://api.honeywell.com/oauth2/token"
+
+class LyricException(Exception):
+    def __init__(self, http_status, code, msg, headers=None):
+        self.http_status = http_status
+        self.code = code
+        self.msg = msg
+        # `headers` is used to support `Retry-After` in the event of a
+        # 429 status code.
+        if headers is None:
+            headers = {}
+        self.headers = headers
+
+    def __str__(self):
+        return 'http status: {0}, code:{1} - {2}'.format(
+                self.http_status, self.code, self.msg)
+
 
 class Lyric:
     """
     This class provides a client for managing Honeywell 'Lyric' devices.
+    See: https://developer.honeywell.com/api-methods?field_smart_method_tags_tid=All
     """
 
-    def __init__(self):
-        config_file = os.path.join((os.path.abspath(os.path.dirname(__file__))), "auth.json")
-        with open(config_file) as json_file:
-            config_data = json.load(json_file)
-            # client data
-            self.client_id = config_data['client']['client_id']
-            self.client_secret = config_data['client']['client_secret']
-            self.api_key = config_data['client']['api_key']
-            self.redirect_url = config_data['client']['redirect_url']
-            # token data
-            self.access_token = config_data['tokens']['access_token']
-            self.refresh_token = config_data['tokens']['refresh_token']
+    trace_out = False
 
-        self.refresh_tokens()
-
-
-    def _get_authorisation_code(self):
-        """Get an authorisation code to access authorisation tokens"""
-        auth_request_url = "{}?response_type=code&client_id={}&redirect_uri={}".format(auth_url, self.client_id,
-                                                                                       self.redirect_url)
-
-        # print authorization link and get response
-        print('Please go to:\n\n%s\n\nand authorize access.\n' % auth_request_url)
-        authorization_response = input('\nEnter the full callback URL:\n')
-
-        # get code from response
-        m = re.search('\?code=(.*)\&scope=', authorization_response)
-        code = m.group(1)
-        print("> Got code: {}".format(code))
-        return code
-
-    def get_tokens(self):
+    def __init__(self, client_credentials_manager=None):
         """
-        Get access tokens.
-        This requires user to open the browser and supply a url at the prompt
+        Create a Lyric API object
+        :param auth: An authorisation token (optional)
         """
-        authorisation_code = self._get_authorisation_code()
-        data = {
-            "grant_type": "authorization_code",
-            "code": authorisation_code,
-            "redirect_uri": self.redirect_url
-        }
-        r = requests.post(token_url, auth=HTTPBasicAuth(self.client_id, self.client_secret), data=data)
+        self.prefix = "https://api.honeywell.com/v2/"
+        self.client_credentials_manager = client_credentials_manager
+        self._session = requests.Session()
 
-        if r.status_code == 200:
-            tokens = r.json()
-            self.access_token = tokens["access_token"]
-            self.refresh_token = tokens["refresh_token"]
+    def _auth_headers(self):
+        if self.client_credentials_manager:
+            token = self.client_credentials_manager.get_access_token()
+            return {'Authorization': 'Bearer {0}'.format(token)}
         else:
-            raise ValueError("Couldn't get token: {}".format(r.json()))
+            return {}
 
-    def refresh_tokens(self):
-        """
-        Refresh authorisation token.
-        """
-        data = {
-            "grant_type": "refresh_token",
-            "refresh_token": self.refresh_token
-        }
-        r = requests.post(token_url, auth=HTTPBasicAuth(self.client_id, self.client_secret), data=data)
-        if r.status_code == 200:
-            self.access_token = r.json()['access_token']
-            print("> Refreshed access token: {}".format(self.access_token))
+    def _internal_call(self, method, url, payload, params):
+        args = dict(params=params)
+        params['apikey'] = self.client_credentials_manager.client_id
+
+        if not url.startswith('http'):
+            url = self.prefix + url
+
+        headers = self._auth_headers()
+        headers['Content-Type'] = 'application/json'
+
+        if payload:
+            args["data"] = json.dumps(payload)
+
+        if self.trace_out:
+            print()
+            print('>>', url)
+
+        r = self._session.request(method, url, headers=headers, **args)
+
+        if self.trace_out:
+            print('>> headers', headers)
+            print('>> http status', r.status_code)
+            print('>>', method, r.url)
+            if payload:
+                print(">> DATA", json.dumps(payload))
+        try:
+            r.raise_for_status()
+        except:
+            raise LyricException(r.status_code, -1, '%s:\n %s' % (r.url, r.json()), headers=r.headers)
+        finally:
+            r.connection.close()
+
+        if r.text and len(r.text) > 0 and r.text != 'null':
+            results = r.json()
+            if self.trace_out:  # pragma: no cover
+                print('>> RESP', results)
+                print()
+            return results
         else:
-            raise ValueError("Couldn't refresh token: {}".format(r.json()))
+            return None
 
-    def _get(self, url, headers, params):
-        r = requests.get(devices_url, headers=headers, params=params)
-        if r.status_code == 200:
-            return [Device(client=self, json=json) for json in r.json()]
-            # return r.json()
-        else:
-            raise ValueError("Couldn't get devices: {}".format(r.json()))
+    def _get(self, url, args=None, payload=None, **kwargs):
+        if args:
+            kwargs.update(args)
+        return self._internal_call('GET', url, payload, kwargs)
 
+    def _post(self, url, args=None, payload=None, **kwargs):
+        if args:
+            kwargs.update(args)
+        return self._internal_call('POST', url, payload, kwargs)
 
-
-    @property
     def locations(self):
         """
-        :return: dictionary with location data
+        https://developer.honeywell.com/lyric/apis/get/locations
+        :return: list of dict
         """
-        locations_url = "https://api.honeywell.com/v2/locations"
-        headers = {"Authorization": "Bearer {}".format(self.access_token)}
-        params = {"apikey": self.client_id}
-
-        r = requests.get(locations_url, headers=headers, params=params)
-        print(r.url)
-        if r.status_code == 200:
-            return r.json()
-        else:
-            raise ValueError("Couldn't get locations: {}".format(r.json()))
+        return self._get('locations')
 
     def devices(self, locationID):
         """
+        https://developer.honeywell.com/lyric/apis/get/devices
         :param locationID: int
-        :return: list of Device
+        :return: list of dict
         """
-        devices_url = "https://api.honeywell.com/v2/devices"
-        headers = {"Authorization": "Bearer {}".format(self.access_token)}
-        params = {
-            "apikey": self.client_id,
-            "locationId": locationID
-        }
+        params = {"locationId": locationID}
+        return self._get('devices', params)
 
-        r = requests.get(devices_url, headers=headers, params=params)
-        if r.status_code == 200:
-            return [Device(client=self, json=json) for json in r.json()]
-            # return r.json()
-        else:
-            raise ValueError("Couldn't get devices: {}".format(r.json()))
-
-    def device(self, deviceID):
+    def device(self, locationID, deviceID):
         """
-        :param deviceID: Device ID
-        :return: Device
+        https://developer.honeywell.com/lyric/apis/get/devices/thermostats/%7BdeviceId%7D-0
+        :param locationID:
+        :return:
         """
-        device_url = "https://api.honeywell.com/v2/devices/thermostats/{}".format(deviceID)
-        headers = {"Authorization": "Bearer {}".format(self.access_token)}
-        params = {
-            "apikey": self.client_id,
-            "locationId": self.locations[0]['locationID']
-            }
-        r = requests.get(device_url, headers=headers, params=params)
-        if r.status_code == 200:
-            return Device(client=self, json=r.json())
-            # return r.json()
-        else:
-            raise ValueError("Couldn't set device: {}".format(r.json()))
+        url = "devices/thermostats/{}".format(deviceID)
+        params = {"locationId": locationID}
+        return self._get(url, params)
 
+    def change_device(self, locationID, deviceID, **kwargs):
+        """
+        https://developer.honeywell.com/lyric/apis/post/devices/thermostats/%7BdeviceId%7D
+        :param locationID:
+        :param deviceID:
+        :return:
+        """
+        url = "devices/thermostats/{}".format(deviceID)
+        params = {"locationId": locationID}
+
+        current_state = self.device(locationID, deviceID)['changeableValues']
+        for k, v in kwargs.items():
+            if k in current_state:
+                current_state[k] = v
+            else:
+                raise Exception("Unknown parameter: '{}'".format(k))
+
+        return self._post(url, params, payload=current_state)

@@ -1,32 +1,49 @@
 from pylyric.lyric import Lyric
-from pylyric.device import Device
+from pylyric.oauth2 import LyricClientCredentials
+import pylyric.config as cfg
 
-client = Lyric()
+lcc = LyricClientCredentials(
+        client_id=cfg.CLIENT_ID,
+        client_secret=cfg.CLIENT_SECRET,
+        api_key=cfg.API_KEY,
+        access_token=cfg.ACCESS_TOKEN,
+        refresh_token=cfg.REFRESH_TOKEN,
+        redirect_url=cfg.REDIRECT_URL
+)
 
-
-def test_initialisation():
-    # client = Lyric()
-    assert client.client_id == "2IvMPqBmBBDhl3vBWVbCs4IvqjfQ9AUZ"
-    assert client.client_secret == "lmVks7zDAdyoRQOT"
-    assert client.api_key == "v4M5vCGGt0F6tMwxwb2ac5UGENegSS4H"
-    assert client.redirect_url == "kingswood"
-    # assert client.access_token == "AZJyWOGjxUVtpGQ2w7jNA9EdWu8O"
-    assert client.refresh_token == "G84Tia8JeST2ELVBqWQWRdZ4cQuqWKZM"
-
-
-def test_refresh_token():
-    t = client.access_token
-    client.refresh_tokens()
-    assert client.access_token != t
+lyric = Lyric(client_credentials_manager=lcc)
+lyric.trace_out = False
+locationID = lyric.locations()[0]['locationID']
+deviceID = lyric.locations()[0]['devices'][0]['deviceID']
 
 
 def test_locations():
-    assert isinstance(client.locations, list)
-    assert isinstance(client.locations[0], dict)
-    assert 'locationID' in client.locations[0]
+    assert isinstance(lyric.locations(), list)
+    assert isinstance(lyric.locations()[0], dict)
+    assert 'locationID' in lyric.locations()[0]
 
 
 def test_devices():
-    locationID = client.locations[0]['locationID']
-    assert isinstance(client.devices(locationID), list)
-    assert isinstance(client.devices(locationID)[0], Device)
+    assert isinstance(lyric.devices(locationID), list)
+    assert isinstance(lyric.devices(locationID)[0], dict)
+
+
+def test_device():
+    assert isinstance(lyric.device(locationID, deviceID), dict)
+
+
+def test_change_device():
+    current_state = lyric.device(locationID, deviceID)['changeableValues']
+    old_mode = current_state['mode']
+    if old_mode == "Off":
+        new_mode = "Heat"
+    else:
+        new_mode = "Off"
+
+    lyric.change_device(locationID, deviceID, mode=new_mode)
+    current_state = lyric.device(locationID, deviceID)['changeableValues']
+    assert current_state['mode'] == new_mode
+
+    lyric.change_device(locationID, deviceID, mode=old_mode)
+    current_state = lyric.device(locationID, deviceID)['changeableValues']
+    assert current_state['mode'] == old_mode
