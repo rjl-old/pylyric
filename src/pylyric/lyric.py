@@ -9,7 +9,9 @@ auth_url = "https://api.honeywell.com/oauth2/authorize"
 token_url = "https://api.honeywell.com/oauth2/token"
 
 class Lyric:
-    """A client for managing Honeywell 'Lyric' devices"""
+    """
+    This class provides a client for managing Honeywell 'Lyric' devices.
+    """
 
     def __init__(self):
         config_file = os.path.join((os.path.abspath(os.path.dirname(__file__))), "auth.json")
@@ -43,8 +45,10 @@ class Lyric:
         return code
 
     def get_tokens(self):
-        """Get access tokens.
-           This requires user to open the browser and supply a url at the prompt"""
+        """
+        Get access tokens.
+        This requires user to open the browser and supply a url at the prompt
+        """
         authorisation_code = self._get_authorisation_code()
         data = {
             "grant_type": "authorization_code",
@@ -61,7 +65,9 @@ class Lyric:
             raise ValueError("Couldn't get token: {}".format(r.json()))
 
     def refresh_tokens(self):
-        """Refresh authorisation token"""
+        """
+        Refresh authorisation token.
+        """
         data = {
             "grant_type": "refresh_token",
             "refresh_token": self.refresh_token
@@ -73,22 +79,43 @@ class Lyric:
         else:
             raise ValueError("Couldn't refresh token: {}".format(r.json()))
 
+    def _get(self, url, headers, params):
+        r = requests.get(devices_url, headers=headers, params=params)
+        if r.status_code == 200:
+            return [Device(client=self, json=json) for json in r.json()]
+            # return r.json()
+        else:
+            raise ValueError("Couldn't get devices: {}".format(r.json()))
+
+
+
     @property
     def locations(self):
+        """
+        :return: dictionary with location data
+        """
         locations_url = "https://api.honeywell.com/v2/locations"
         headers = {"Authorization": "Bearer {}".format(self.access_token)}
         params = {"apikey": self.client_id}
 
         r = requests.get(locations_url, headers=headers, params=params)
+        print(r.url)
         if r.status_code == 200:
             return r.json()
         else:
             raise ValueError("Couldn't get locations: {}".format(r.json()))
 
     def devices(self, locationID):
+        """
+        :param locationID: int
+        :return: list of Device
+        """
         devices_url = "https://api.honeywell.com/v2/devices"
         headers = {"Authorization": "Bearer {}".format(self.access_token)}
-        params = {"apikey": self.client_id, "locationId": self.locations[0]['locationID']}
+        params = {
+            "apikey": self.client_id,
+            "locationId": locationID
+        }
 
         r = requests.get(devices_url, headers=headers, params=params)
         if r.status_code == 200:
@@ -98,6 +125,10 @@ class Lyric:
             raise ValueError("Couldn't get devices: {}".format(r.json()))
 
     def device(self, deviceID):
+        """
+        :param deviceID: Device ID
+        :return: Device
+        """
         device_url = "https://api.honeywell.com/v2/devices/thermostats/{}".format(deviceID)
         headers = {"Authorization": "Bearer {}".format(self.access_token)}
         params = {
@@ -106,7 +137,7 @@ class Lyric:
             }
         r = requests.get(device_url, headers=headers, params=params)
         if r.status_code == 200:
-            return r.json()
+            return Device(client=self, json=r.json())
             # return r.json()
         else:
             raise ValueError("Couldn't set device: {}".format(r.json()))
