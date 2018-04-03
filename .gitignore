@@ -50,3 +50,4 @@ dev/lyric.py
 
 # Config
 pylyric/config.py
+src/pylyric/config.py
