@@ -42,3 +42,8 @@ cover/*
 MANIFEST
 venv
 .pytest_cache
+
+# Temp scripts
+dev/*
+dev/getlyricids.py
+dev/lyric.py
