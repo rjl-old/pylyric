@@ -5,12 +5,12 @@ import datetime
 
 class Influx:
 
-    def __init__(self):
+    def __init__(self, dbname):
         host = cfg.IP
         port = cfg.PORT
         user = cfg.USERNAME
         password = cfg.PASSWORD
-        dbname = "test"
+        dbname = dbname
 
         self.client = InfluxDBClient(host, port, user, password, dbname)
 

@@ -29,6 +29,7 @@ def lyric():
     # lyric.trace_out = True
     return lyric_client
 
+
 @pytest.fixture(scope="module")
 def device():
     return thermostat

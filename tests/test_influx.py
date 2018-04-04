@@ -1,11 +1,13 @@
 from pylyric.influx import Influx
 
-i = Influx()
+db = Influx(dbname="test")
 
 
 def test_initialise():
-    assert isinstance(i, Influx)
+    assert isinstance(db, Influx)
 
 
 def test_write():
-    print(i.write("lyric", outdoorTemperature=21.3, heating=True))
+    print(db.write("lyric", outdoorTemperature=21.3, heating=True))
+
+
