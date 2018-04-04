@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 class Device:
     """
     This class represents a Honeywell 'Lyric' T6 thermostat
