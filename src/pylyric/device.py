@@ -31,23 +31,16 @@ class Device:
         https://developer.honeywell.com/lyric/apis/post/devices/thermostats/%7BdeviceId%7D
         :return:
         """
-        url = "devices/thermostats/{}".format(self.deviceID)
-        params = {"locationId": self.locationID}
-
-        current_state = self.changeableValues
+        old_state = self.changeableValues
+        new_state = old_state
         for k, v in kwargs.items():
-            if k in current_state:
-                current_state[k] = v
+            if k in new_state:
+                new_state[k] = v
             else:
                 raise Exception("Unknown parameter: '{}'".format(k))
-        self.client._post(url, params, payload=current_state)
-        self._update()
 
-    def _update(self):
-        url = "devices/thermostats/{}".format(self.deviceID)
-        params = {"locationId": self.locationID}
-        json = self.client._get(url, params)
-        self._parse(json)
+        self.client.change_device(locationID=self.locationID, deviceID=self.deviceID, **new_state)
+        self.changeableValues = new_state
 
     def _parse(self, json):
         self.deviceID = json['deviceID']
