@@ -108,7 +108,7 @@ class Lyric:
         """
         https://developer.honeywell.com/lyric/apis/get/devices
         :param locationID: int
-        :return: list of dict
+        :return: list of dict of device properties
         """
         params = {"locationId": locationID}
         json = self._get('devices', params)
@@ -118,7 +118,7 @@ class Lyric:
         """
         https://developer.honeywell.com/lyric/apis/get/devices/thermostats/%7BdeviceId%7D-0
         :param locationID:
-        :return:
+        :return: dict of device properties
         """
         url = "devices/thermostats/{}".format(deviceID)
         params = {"locationId": locationID}

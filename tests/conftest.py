@@ -2,20 +2,33 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, absolute_import, division
 import pytest
-from pylyric.lyric import Lyric
 from pylyric.oauth2 import LyricClientCredentials
+from pylyric.lyric import Lyric
+from pylyric.device import Device
 import pylyric.config as cfg
+
+lcc = LyricClientCredentials(
+        client_id=cfg.CLIENT_ID,
+        client_secret=cfg.CLIENT_SECRET,
+        api_key=cfg.API_KEY,
+        access_token=cfg.ACCESS_TOKEN,
+        refresh_token=cfg.REFRESH_TOKEN,
+        redirect_url=cfg.REDIRECT_URL
+)
+lyric_client = Lyric(client_credentials_manager=lcc)
+
+locationID = lyric_client.locations()[0]['locationID']
+deviceID = lyric_client.locations()[0]['devices'][0]['deviceID']
+device_dict = lyric_client.device(locationID, deviceID)
+
+thermostat = Device(client=lyric_client, json=device_dict, locationID=locationID)
+
 
 @pytest.fixture(scope="module")
 def lyric():
-    lcc = LyricClientCredentials(
-            client_id=cfg.CLIENT_ID,
-            client_secret=cfg.CLIENT_SECRET,
-            api_key=cfg.API_KEY,
-            access_token=cfg.ACCESS_TOKEN,
-            refresh_token=cfg.REFRESH_TOKEN,
-            redirect_url=cfg.REDIRECT_URL
-    )
-    lyric = Lyric(client_credentials_manager=lcc)
     # lyric.trace_out = True
-    return lyric
+    return lyric_client
+
+@pytest.fixture(scope="module")
+def device():
+    return thermostat
