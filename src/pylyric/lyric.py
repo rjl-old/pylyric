@@ -108,9 +108,8 @@ class Lyric:
         :return: list of dict
         """
         params = {"locationId": locationID}
-        devices = self._get('devices', params)
-        return [Device(client=self, json=json, locationID=locationID) for json in devices]
-        # return self._get('devices', params)
+        json = self._get('devices', params)
+        return json
 
     def device(self, locationID, deviceID):
         """
@@ -121,13 +120,13 @@ class Lyric:
         url = "devices/thermostats/{}".format(deviceID)
         params = {"locationId": locationID}
         json = self._get(url, params)
-        return Device(client=self, json=json, locationID=locationID)
+        return json
 
     def change_device(self, locationID, deviceID, **kwargs):
         """
         https://developer.honeywell.com/lyric/apis/post/devices/thermostats/%7BdeviceId%7D
-        :param locationID:
-        :param deviceID:
+        :param locationID: int
+        :param deviceID: int
         :return:
         """
         url = "devices/thermostats/{}".format(deviceID)

@@ -10,9 +10,10 @@ class Device:
         :param json: json data returned from Lyric.device()
         """
         self.client = client
-        self.locationID = locationID
 
+        self.locationID = locationID
         self.deviceID = None
+
         self.changeableValues = None
         self.allowedModes = None
         self.outdoorHumidity = None

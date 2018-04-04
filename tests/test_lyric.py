@@ -3,6 +3,10 @@ from pylyric.device import Device
 from pylyric.oauth2 import LyricClientCredentials
 import pylyric.config as cfg
 
+
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
 lcc = LyricClientCredentials(
         client_id=cfg.CLIENT_ID,
         client_secret=cfg.CLIENT_SECRET,
@@ -13,10 +17,10 @@ lcc = LyricClientCredentials(
 )
 
 lyric = Lyric(client_credentials_manager=lcc)
-lyric.trace_out = True
+# lyric.trace_out = True
 locationID = lyric.locations()[0]['locationID']
+device = lyric.locations()[0]['devices'][0]
 deviceID = lyric.locations()[0]['devices'][0]['deviceID']
-
 
 def test_locations():
     assert isinstance(lyric.locations(), list)
@@ -26,8 +30,29 @@ def test_locations():
 
 def test_devices():
     assert isinstance(lyric.devices(locationID), list)
-    assert isinstance(lyric.devices(locationID)[0], Device)
+    assert isinstance(lyric.devices(locationID)[0], dict)
 
 
 def test_device():
-    assert isinstance(lyric.device(locationID, deviceID), Device)
+    assert isinstance(lyric.device(locationID, deviceID), dict)
+
+
+def test_change_device():
+    # print("======")
+    # pp.pprint(device)
+
+    old_state = device['changeableValues']
+    old_mode = old_state['mode']
+
+    if old_mode == "Off":
+        new_mode = "Heat"
+    else:
+        new_mode = "Off"
+
+    lyric.change_device(locationID=locationID, deviceID=deviceID, mode=new_mode)
+    new_state = lyric.device(locationID, deviceID)['changeableValues']
+    assert new_state['mode'] == new_mode
+
+    lyric.change_device(locationID=locationID, deviceID=deviceID, mode=old_mode)
+    new_state = lyric.device(locationID, deviceID)['changeableValues']
+    assert new_state['mode'] == old_mode

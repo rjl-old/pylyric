@@ -21,17 +21,4 @@ def test_allowed_modes():
     assert isinstance(device.allowedModes, list)
 
 
-def test_change_device():
-    current_state = device.changeableValues
-    old_mode = current_state['mode']
 
-    if old_mode == "Off":
-        new_mode = "Heat"
-    else:
-        new_mode = "Off"
-
-    device.change(mode=new_mode)
-    assert device.changeableValues['mode'] == new_mode
-
-    device.change(mode=old_mode)
-    assert device.changeableValues['mode'] == old_mode
