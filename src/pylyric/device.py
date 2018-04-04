@@ -46,7 +46,7 @@ class Device:
         self.deviceID = json['deviceID']
         self.changeableValues = json['changeableValues']
         self.allowedModes = json['allowedModes']
-        self.outdoorHumidity = json['displayedOutdoorHumidity']
-        self.outdoorTemperature = json['outdoorTemperature']
-        self.indoorTemperature = json['indoorTemperature']
+        self.outdoorHumidity = int(json['displayedOutdoorHumidity'])
+        self.outdoorTemperature = float(json['outdoorTemperature'])
+        self.indoorTemperature = float(json['indoorTemperature'])
         self.operationStatus = json['operationStatus']['mode']
