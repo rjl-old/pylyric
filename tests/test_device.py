@@ -2,7 +2,6 @@ def test_allowed_modes(device):
     assert isinstance(device.allowedModes, list)
 
 
-
 def test_change(device):
     # GIVEN a device
     # WHEN I change a changeable value
