@@ -38,9 +38,8 @@ def test_device():
 
 
 def test_change_device():
-    # print("======")
-    # pp.pprint(device)
 
+    # capture current state
     old_state = device['changeableValues']
     old_mode = old_state['mode']
 
@@ -49,10 +48,12 @@ def test_change_device():
     else:
         new_mode = "Off"
 
+    # change state and test
     lyric.change_device(locationID=locationID, deviceID=deviceID, mode=new_mode)
     new_state = lyric.device(locationID, deviceID)['changeableValues']
     assert new_state['mode'] == new_mode
 
+    # return to current state
     lyric.change_device(locationID=locationID, deviceID=deviceID, mode=old_mode)
     new_state = lyric.device(locationID, deviceID)['changeableValues']
     assert new_state['mode'] == old_mode
