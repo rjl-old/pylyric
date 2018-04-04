@@ -13,7 +13,7 @@ from pylyric.lyric import Lyric
 from pylyric.oauth2 import LyricClientCredentials
 import pylyric.config as cfg
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def lyric():
     lcc = LyricClientCredentials(
             client_id=cfg.CLIENT_ID,
