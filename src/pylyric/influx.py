@@ -19,15 +19,8 @@ class Influx:
             {
                 "measurement": "{}".format(measurement),
                 "tags": {
-                    "host": "server01",
-                    "region": "us-west"
                 },
-                "fields": {
-                    "Float_value": 0.64,
-                    "Int_value": 3,
-                    "String_value": "Text",
-                    "Bool_value": True
-                }
+                "fields": kwargs
             }
         ]
         self.client.write_points(json_body)
