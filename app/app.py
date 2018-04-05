@@ -52,6 +52,16 @@ def get_operationStatus():
 def get_mode():
     return jsonify({'mode': thermostat.changeableValues['mode']})
 
+@app.route('/lyric/api/v1.0/update', methods=['POST'])
+def post_update():
+    thermostat.update()
+    return jsonify({'updated': thermostat.last_update})
+
+
+@app.route('/lyric/api/v1.0/lastupdate', methods=['GET'])
+def get_lastUpdate():
+    return jsonify({'lastUpdate': thermostat.last_update})
+
 
 if __name__ == '__main__':
     app.run(debug=True)

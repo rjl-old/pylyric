@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import datetime
+
 
 class Device:
     """
@@ -24,6 +26,12 @@ class Device:
         self.indoorTemperature = None
         self.operationStatus = None
 
+        self.last_update = None
+
+        self._parse(json)
+
+    def update(self):
+        json = self.client.device(locationID=self.locationID, deviceID=self.deviceID)
         self._parse(json)
 
     def change(self, **kwargs):
@@ -50,3 +58,5 @@ class Device:
         self.outdoorTemperature = float(json['outdoorTemperature'])
         self.indoorTemperature = float(json['indoorTemperature'])
         self.operationStatus = json['operationStatus']['mode']
+
+        self.last_update = datetime.datetime.now()
