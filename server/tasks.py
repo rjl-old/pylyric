@@ -35,5 +35,5 @@ def notify_me():
 
 
 tasks = [
-    notify_me
+
 ]
