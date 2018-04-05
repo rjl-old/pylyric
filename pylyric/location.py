@@ -18,7 +18,7 @@ class Location:
             city: str,
             country: str,
             zip_code: str,
-            devices: List[Device] or str,
+            devices: List[Device] or List[dict] or str,
             users: List[Dict] or str
     ):
         """
@@ -31,6 +31,7 @@ class Location:
         :param country:
         :param zip_code:
         :param devices: A list of devices or string representation.
+        :param users: A list of users or string representation.
         """
         self.lyric_api = lyric_api
         self.location_id = location_id
@@ -49,8 +50,10 @@ class Location:
         """
         if isinstance(self._devices, str):
             self._devices = json.loads(self._devices)
+        if len(self._devices) > 0 and isinstance(self._devices[0], dict):
+            self._devices = [Device.from_json(self.location_id, self.lyric_api, data) for data in self._devices]
 
-        return [Device.from_json(self.location_id, self.lyric_api, data) for data in self._devices]
+        return self._devices
 
     def get_users(self) -> List[Dict]:
         """
@@ -67,7 +70,7 @@ class Location:
         """
         Converts a json object or string representation
         into a honeywell location.
-        :param client: The client to use to update.
+        :param lyric_api: The client to use to update.
         :param data: The data in string or dict form.
         :return: A location object for that data.
         """
