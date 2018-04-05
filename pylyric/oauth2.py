@@ -27,7 +27,7 @@ class LyricOauthError(Exception):
     pass
 
 
-class LyricClientCredentials:
+class ApiCredentials:
 
     def __init__(self, client_id=os.getenv(LYRIC_CLIENT_ID, None), client_secret=os.getenv(LYRIC_CLIENT_SECRET, None),
                  access_token=os.getenv(LYRIC_ACCESS_TOKEN, None), refresh_token=os.getenv(LYRIC_REFRESH_TOKEN, None)):
@@ -60,7 +60,7 @@ class LyricClientCredentials:
         :raises LyricOauthError: Expired token can't be refreshed.
         """
         if self._is_token_expired():
-            self._refresh()
+            self._refresh_token()
         return self.access_token
 
     def _is_token_expired(self) -> bool:
@@ -69,7 +69,7 @@ class LyricClientCredentials:
         """
         return True if self.expiry_date is None else self.expiry_date < datetime.datetime.now()
 
-    def _refresh(self):
+    def _refresh_token(self):
         """
         Refreshes the authentication token.
         :raises LyricOauthError: Problem with API.
