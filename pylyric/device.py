@@ -3,12 +3,13 @@
 import datetime
 
 
+
 class Device:
     """
     This class represents a Honeywell 'Lyric' T6 thermostat
     """
 
-    def __init__(self, client, json, locationID):
+    def __init__(self, client, json, location_id):
         """
 
         :param client: Lyric client
@@ -16,7 +17,7 @@ class Device:
         """
         self.client = client
 
-        self.locationID = locationID
+        self.locationID = location_id
         self.deviceID = None
 
         self.changeableValues = None
@@ -47,7 +48,7 @@ class Device:
             else:
                 raise Exception("Unknown parameter: '{}'".format(k))
 
-        self.client.change_device(locationID=self.locationID, deviceID=self.deviceID, **new_state)
+        self.client.change_device(location_id=self.locationID, device_id=self.deviceID, **new_state)
         self.changeableValues = new_state
 
     def _parse(self, json):

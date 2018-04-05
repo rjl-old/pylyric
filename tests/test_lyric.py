@@ -31,7 +31,7 @@ def test_change_device(lyric):
         new_mode = "Off"
 
     # change state and test
-    lyric.change_device(locationID=locationID, deviceID=deviceID, mode=new_mode)
+    lyric.change_device(location_id=locationID, device_id=deviceID, mode=new_mode)
     new_state = lyric.device(locationID, deviceID)['changeableValues']
     assert new_state['mode'] == new_mode
 
