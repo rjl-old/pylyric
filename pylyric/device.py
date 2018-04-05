@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import datetime
+import json
+from typing import Dict
 
+from pylyric.lyric import Lyric
 
 
 class Device:
@@ -9,38 +12,73 @@ class Device:
     This class represents a Honeywell 'Lyric' T6 thermostat
     """
 
-    def __init__(self, client, json, location_id):
-        """
+    def __init__(
+            self,
+            client: Lyric,
+            location_id: int,
+            device_id: int,
+            changeable_values,
+            allowed_modes,
+            outdoor_humidity,
+            outdoor_temperature,
+            indoor_temperature,
+            operation_status
+    ):
 
-        :param client: Lyric client
-        :param json: json data returned from Lyric.device()
-        """
         self.client = client
+        self.location_id = location_id
+        self.device_id = device_id
+        self.changeable_values = changeable_values
+        self.allowed_modes = allowed_modes
+        self.outdoor_humidity = outdoor_humidity
+        self.outdoor_temperature = outdoor_temperature
+        self.indoor_temperature = indoor_temperature
+        self.operation_status = operation_status
 
-        self.locationID = location_id
-        self.deviceID = None
+        self.last_update = datetime.datetime.now()
 
-        self.changeableValues = None
-        self.allowedModes = None
-        self.outdoorHumidity = None
-        self.outdoorTemperature = None
-        self.indoorTemperature = None
-        self.operationStatus = None
+    @staticmethod
+    def from_json(location_id: int, client: Lyric, data: Dict or str):
+        if isinstance(data, str):
+            data = json.loads(data)
 
-        self.last_update = None
+        return Device(
+            client,
+            location_id,
+            data['deviceID'],
+            data['changeableValues'],
+            data['allowedModes'],
+            data['displayedOutdoorHumidity'],
+            data['outdoorTemperature'],
+            data['indoorTemperature'],
+            data['operationStatus']['mode'],
+        )
 
-        self._parse(json)
+    def update(self) -> 'Device':
+        """
+        Gets the latest data for the device from the server.
+        :return: The device for function chaining.
+        """
+        data = self.client.device(location_id=self.location_id, device_id=self.device_id)
 
-    def update(self):
-        json = self.client.device(location_id=self.locationID, device_id=self.deviceID)
-        self._parse(json)
+        self.device_id = data['deviceID']
+        self.changeable_values = data['changeableValues']
+        self.allowed_modes = data['allowedModes']
+        self.outdoor_humidity = int(data['displayedOutdoorHumidity'])
+        self.outdoor_temperature = float(data['outdoorTemperature'])
+        self.indoor_temperature = float(data['indoorTemperature'])
+        self.operation_status = data['operationStatus']['mode']
+
+        self.last_update = datetime.datetime.now()
+
+        return self
 
     def change(self, **kwargs):
         """
         https://developer.honeywell.com/lyric/apis/post/devices/thermostats/%7BdeviceId%7D
         :return:
         """
-        old_state = self.changeableValues
+        old_state = self.changeable_values
         new_state = old_state
         for k, v in kwargs.items():
             if k in new_state:
@@ -48,16 +86,5 @@ class Device:
             else:
                 raise Exception("Unknown parameter: '{}'".format(k))
 
-        self.client.change_device(location_id=self.locationID, device_id=self.deviceID, **new_state)
-        self.changeableValues = new_state
-
-    def _parse(self, json):
-        self.deviceID = json['deviceID']
-        self.changeableValues = json['changeableValues']
-        self.allowedModes = json['allowedModes']
-        self.outdoorHumidity = int(json['displayedOutdoorHumidity'])
-        self.outdoorTemperature = float(json['outdoorTemperature'])
-        self.indoorTemperature = float(json['indoorTemperature'])
-        self.operationStatus = json['operationStatus']['mode']
-
-        self.last_update = datetime.datetime.now()
+        self.client.change_device(location_id=self.location_id, device_id=self.device_id, **new_state)
+        self.changeable_values = new_state
