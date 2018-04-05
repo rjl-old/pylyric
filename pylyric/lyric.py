@@ -2,9 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import json
+from typing import List, Dict
 
 import requests
 from requests import HTTPError
+from sanic.log import logger
+
+from pylyric.device import Device
+from pylyric.location import Location
 
 
 class LyricException(Exception):
@@ -20,7 +25,7 @@ class LyricException(Exception):
 
     def __str__(self):
         return 'http status: {0}, code:{1} - {2}'.format(
-                self.http_status, self.code, self.msg)
+            self.http_status, self.code, self.msg)
 
 
 class Lyric:
@@ -29,103 +34,50 @@ class Lyric:
     See: https://developer.honeywell.com/server-methods?field_smart_method_tags_tid=All
     """
 
-    trace_out = False
-
-    def __init__(self, client_credentials_manager=None):
+    def __init__(self, credentials=None):
         """
         Create a Lyric API object
-        :param client_credentials_manager: An authorisation token (optional)
+        :param credentials: An authorisation token (optional)
         """
-        self.prefix = "https://api.honeywell.com/v2/"
-        self.client_credentials_manager = client_credentials_manager
+        self.lyric_api = LyricApi(credentials)
         self._session = requests.Session()
 
-    def _auth_headers(self):
-        if self.client_credentials_manager:
-            token = self.client_credentials_manager.get_access_token()
-            return {'Authorization': 'Bearer {0}'.format(token)}
-        else:
-            return {}
-
-    def _internal_call(self, method, url, payload, params):
-        args = dict(params=params)
-        params['apikey'] = self.client_credentials_manager.client_id
-
-        if not url.startswith('http'):
-            url = self.prefix + url
-
-        headers = self._auth_headers()
-        headers['Content-Type'] = 'application/json'
-
-        if payload:
-            args["data"] = json.dumps(payload)
-
-        if self.trace_out:
-            print()
-            print('>>', url)
-
-        request = self._session.request(method, url, headers=headers, **args)
-
-        if self.trace_out:
-            print('>> headers', headers)
-            print('>> http status', request.status_code)
-            print('>>', method, request.url)
-            if payload:
-                print(">> DATA", json.dumps(payload))
-        try:
-            request.raise_for_status()
-        except HTTPError:
-            raise LyricException(request.status_code, -1, '%s:\n %s' % (request.url, request.json()), headers=request.headers)
-        finally:
-            request.connection.close()
-
-        if request.text and len(request.text) > 0 and request.text != 'null':
-            results = request.json()
-            if self.trace_out:  # pragma: no cover
-                print('>> RESP', results)
-                print()
-            return results
-        else:
-            return None
-
-    def _get(self, url, args=None, payload=None, **kwargs):
-        if args:
-            kwargs.update(args)
-        return self._internal_call('GET', url, payload, kwargs)
-
-    def _post(self, url, args=None, payload=None, **kwargs):
-        if args:
-            kwargs.update(args)
-        return self._internal_call('POST', url, payload, kwargs)
-
-    def locations(self):
+    def get_locations(self) -> List[Location]:
         """
         https://developer.honeywell.com/lyric/apis/get/locations
         :return: list of dict
         """
-        return self._get('locations')
+        return [Location.from_json(self.lyric_api, loc) for loc in self.lyric_api.get('locations')]
 
-    def devices(self, location_id):
+    def get_location(self, location_id) -> Location:
+        """
+
+        :param location_id:
+        :return:
+        """
+        pass
+
+    def get_devices(self, location_id) -> List[Device]:
         """
         https://developer.honeywell.com/lyric/apis/get/devices
         :param location_id: int
         :return: list of dict of device properties
         """
         params = {"locationId": location_id}
-        data = self._get('devices', params)
-        return data
+        devices = self.lyric_api.get('devices', params)
+        return [Device.from_json(location_id, self.lyric_api, device_data) for device_data in devices]
 
-    def device(self, location_id, device_id):
+    def get_thermostat(self, location_id, device_id) -> Device:
         """
         https://developer.honeywell.com/lyric/apis/get/devices/thermostats/%7BdeviceId%7D-0
         :param location_id:
         :param device_id:
         :return: dict of device properties
         """
-        url = "devices/thermostats/{}".format(device_id)
+        url = f"devices/thermostats/{device_id}"
         params = {"locationId": location_id}
-        data = self._get(url, params)
-        return data
+        data = self.lyric_api.get(url, params)
+        return Device.from_json(location_id, self.lyric_api, data)
 
     def change_device(self, location_id, device_id, **kwargs):
         """
@@ -137,11 +89,83 @@ class Lyric:
         url = "devices/thermostats/{}".format(device_id)
         params = {"locationId": location_id}
 
-        current_state = self.device(location_id, device_id)['changeableValues']
+        current_state = self.get_thermostat(location_id, device_id)['changeableValues']
         for k, v in kwargs.items():
             if k in current_state:
                 current_state[k] = v
             else:
                 raise Exception("Unknown parameter: '{}'".format(k))
 
-        return self._post(url, params, payload=current_state)
+        return self.lyric_api.get(url, params, payload=current_state)
+
+
+class LyricApi:
+    """
+    Encapsulates all the direct communication with the lyric api.
+    """
+
+    HONEYWELL_API = "https://api.honeywell.com/v2/"
+
+    def __init__(self, client_credentials_manager=None):
+        """
+        Create a Lyric API object
+        :param client_credentials_manager: An authorisation token (optional)
+        """
+        self.client_credentials_manager = client_credentials_manager
+        self._session = requests.Session()
+
+    def _get_auth_headers(self, headers: Dict or None = None) -> Dict[str, str]:
+        """
+        Creates auth headers for the current token.
+        :param headers: An already existing headers object to add to.
+        :return: A header dict with the correct auth.
+        """
+        if headers is None:
+            return {'Authorization': f'Bearer {self.client_credentials_manager.get_access_token()}'}
+        else:
+            headers['Authorization'] = f'Bearer {self.client_credentials_manager.get_access_token()}'
+            return headers
+
+    def _internal_call(self, method, url, payload, params):
+        args = dict(params=params)
+        params['apikey'] = self.client_credentials_manager.client_id
+
+        if not url.startswith(self.HONEYWELL_API):
+            url = self.HONEYWELL_API + url
+
+        headers = self._get_auth_headers({'Content-Type': 'application/json'})
+
+        if payload:
+            args["data"] = json.dumps(payload)
+
+        request = self._session.request(method, url, headers=headers, **args)
+
+        logger.debug(f"Making request to {url}")
+        logger.debug(f" - headers: {headers}")
+        logger.debug(f" - status : {request.status_code}")
+        logger.debug(f" - method : {method}")
+        if payload:
+            logger.debug(" - payload:", json.dumps(payload))
+
+        try:
+            request.raise_for_status()
+        except HTTPError:
+            raise LyricException(request.status_code, -1, '%s:\n %s' % (request.url, request.json()),
+                                 headers=request.headers)
+
+        if request.text and len(request.text) > 0 and request.text != 'null':
+            results = request.json()
+            logger.debug(f" - return : {results}")
+            return results
+        else:
+            return None
+
+    def get(self, url, args=None, payload=None, **kwargs):
+        if args:
+            kwargs.update(args)
+        return self._internal_call('GET', url, payload, kwargs)
+
+    def post(self, url, args=None, payload=None, **kwargs):
+        if args:
+            kwargs.update(args)
+        return self._internal_call('POST', url, payload, kwargs)
