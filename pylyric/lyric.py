@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import requests
 import json
-from pylyric.device import Device
+
+import requests
+from requests import HTTPError
 
 
 class LyricException(Exception):
@@ -25,7 +26,7 @@ class LyricException(Exception):
 class Lyric:
     """
     This class provides a client for managing Honeywell 'Lyric' devices.
-    See: https://developer.honeywell.com/api-methods?field_smart_method_tags_tid=All
+    See: https://developer.honeywell.com/server-methods?field_smart_method_tags_tid=All
     """
 
     trace_out = False
@@ -33,9 +34,9 @@ class Lyric:
     def __init__(self, client_credentials_manager=None):
         """
         Create a Lyric API object
-        :param auth: An authorisation token (optional)
+        :param client_credentials_manager: An authorisation token (optional)
         """
-        self.prefix = "https://api.honeywell.com/v2/"
+        self.prefix = "https://server.honeywell.com/v2/"
         self.client_credentials_manager = client_credentials_manager
         self._session = requests.Session()
 
@@ -63,23 +64,23 @@ class Lyric:
             print()
             print('>>', url)
 
-        r = self._session.request(method, url, headers=headers, **args)
+        request = self._session.request(method, url, headers=headers, **args)
 
         if self.trace_out:
             print('>> headers', headers)
-            print('>> http status', r.status_code)
-            print('>>', method, r.url)
+            print('>> http status', request.status_code)
+            print('>>', method, request.url)
             if payload:
                 print(">> DATA", json.dumps(payload))
         try:
-            r.raise_for_status()
-        except:
-            raise LyricException(r.status_code, -1, '%s:\n %s' % (r.url, r.json()), headers=r.headers)
+            request.raise_for_status()
+        except HTTPError:
+            raise LyricException(request.status_code, -1, '%s:\n %s' % (request.url, request.json()), headers=request.headers)
         finally:
-            r.connection.close()
+            request.connection.close()
 
-        if r.text and len(r.text) > 0 and r.text != 'null':
-            results = r.json()
+        if request.text and len(request.text) > 0 and request.text != 'null':
+            results = request.json()
             if self.trace_out:  # pragma: no cover
                 print('>> RESP', results)
                 print()
@@ -104,38 +105,39 @@ class Lyric:
         """
         return self._get('locations')
 
-    def devices(self, locationID):
+    def devices(self, location_id):
         """
         https://developer.honeywell.com/lyric/apis/get/devices
-        :param locationID: int
+        :param location_id: int
         :return: list of dict of device properties
         """
-        params = {"locationId": locationID}
-        json = self._get('devices', params)
-        return json
+        params = {"locationId": location_id}
+        data = self._get('devices', params)
+        return data
 
-    def device(self, locationID, deviceID):
+    def device(self, location_id, device_id):
         """
         https://developer.honeywell.com/lyric/apis/get/devices/thermostats/%7BdeviceId%7D-0
-        :param locationID:
+        :param location_id:
+        :param device_id:
         :return: dict of device properties
         """
-        url = "devices/thermostats/{}".format(deviceID)
-        params = {"locationId": locationID}
-        json = self._get(url, params)
-        return json
+        url = "devices/thermostats/{}".format(device_id)
+        params = {"locationId": location_id}
+        data = self._get(url, params)
+        return data
 
-    def change_device(self, locationID, deviceID, **kwargs):
+    def change_device(self, location_id, device_id, **kwargs):
         """
         https://developer.honeywell.com/lyric/apis/post/devices/thermostats/%7BdeviceId%7D
-        :param locationID: int
-        :param deviceID: int
+        :param location_id: int
+        :param device_id: int
         :return:
         """
-        url = "devices/thermostats/{}".format(deviceID)
-        params = {"locationId": locationID}
+        url = "devices/thermostats/{}".format(device_id)
+        params = {"locationId": location_id}
 
-        current_state = self.device(locationID, deviceID)['changeableValues']
+        current_state = self.device(location_id, device_id)['changeableValues']
         for k, v in kwargs.items():
             if k in current_state:
                 current_state[k] = v

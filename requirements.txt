@@ -1,7 +1,16 @@
-# Add your pinned requirements so that they can be easily installed with:
-# pip install -r requirements.txt
-# Remember to also add them in setup.cfg but unpinned.
-# Example:
-# numpy==1.13.3
-# scipy==1.0
-
+aiofiles==0.3.2
+certifi==2018.1.18
+chardet==3.0.4
+click==6.7
+httptools==0.0.11
+idna==2.6
+itsdangerous==0.24
+Jinja2==2.10
+MarkupSafe==1.0
+requests==2.18.4
+sanic==0.7.0
+ujson==1.35
+urllib3==1.22
+uvloop==0.9.1
+websockets==4.0.1
+Werkzeug==0.14.1
