@@ -36,7 +36,7 @@ class Lyric:
         Create a Lyric API object
         :param client_credentials_manager: An authorisation token (optional)
         """
-        self.prefix = "https://server.honeywell.com/v2/"
+        self.prefix = "https://api.honeywell.com/v2/"
         self.client_credentials_manager = client_credentials_manager
         self._session = requests.Session()
 

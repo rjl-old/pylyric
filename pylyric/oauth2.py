@@ -4,7 +4,7 @@ import os
 from requests import post
 from requests.auth import HTTPBasicAuth
 
-TOKEN_URL = "https://server.honeywell.com/oauth2/token"
+TOKEN_URL = "https://api.honeywell.com/oauth2/token"
 
 LYRIC_CLIENT_ID = "LYRIC_CLIENT_ID"
 LYRIC_CLIENT_SECRET = "LYRIC_CLIENT_SECRET"
