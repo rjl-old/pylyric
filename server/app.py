@@ -5,7 +5,7 @@ from pylyric.lyric import Lyric
 from pylyric.device import Device
 from pylyric.oauth2 import LyricClientCredentials
 from server import config as cfg
-from server.tasks import tasks
+from server.tasks import tasks, async_run_every
 
 app = Sanic()
 
@@ -60,6 +60,15 @@ async def post_update(request):
 @app.route('/lyric/api/v1.0/lastupdate', methods=['GET'])
 async def get_last_update():
     return response.json({'lastUpdate': thermostat.last_update})
+
+
+@async_run_every(seconds=600)
+def update(device: Device):
+    print("updating thermostat")
+    device.update()
+
+
+app.add_task(update(thermostat))
 
 for task in tasks:
     app.add_task(task())

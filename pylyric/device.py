@@ -32,7 +32,7 @@ class Device:
         self._parse(json)
 
     def update(self):
-        json = self.client.device(locationID=self.locationID, deviceID=self.deviceID)
+        json = self.client.device(location_id=self.locationID, device_id=self.deviceID)
         self._parse(json)
 
     def change(self, **kwargs):
