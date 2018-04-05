@@ -1,18 +1,17 @@
-import pylyric.config as cfg
+import server.config as cfg
 from influxdb import InfluxDBClient
-import datetime
 
 
 class Influx:
 
-    def __init__(self, dbname):
+    def __init__(self, db_name):
         host = cfg.IP
         port = cfg.PORT
         user = cfg.USERNAME
         password = cfg.PASSWORD
-        dbname = dbname
+        db_name = db_name
 
-        self.client = InfluxDBClient(host, port, user, password, dbname)
+        self.client = InfluxDBClient(host, port, user, password, db_name)
 
     def write(self, measurement, **kwargs):
         json_body = [
