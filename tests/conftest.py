@@ -5,17 +5,17 @@ import pytest
 from pylyric.oauth2 import ApiCredentials
 from pylyric.lyric import Lyric
 from pylyric.device import Device
-import pylyric.config as cfg
+import server.config as cfg
 
 lcc = ApiCredentials(client_id=cfg.CLIENT_ID, client_secret=cfg.CLIENT_SECRET, access_token=cfg.ACCESS_TOKEN,
                      refresh_token=cfg.REFRESH_TOKEN)
 lyric_client = Lyric(credentials=lcc)
 
-locationID = lyric_client.get_locations()[0]['locationID']
-deviceID = lyric_client.get_locations()[0]['devices'][0]['deviceID']
+locationID = lyric_client.get_locations()[0].location_id
+deviceID = lyric_client.get_locations()[0]._devices[0]['deviceID']
 device_dict = lyric_client.get_thermostat(locationID, deviceID)
 
-thermostat = Device(client=lyric_client, json=device_dict, location_id=locationID)
+thermostat = Device(lyric_api=lyric_client, json=device_dict, location_id=locationID)
 
 
 @pytest.fixture(scope="module")
