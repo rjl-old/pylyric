@@ -1,19 +1,5 @@
-import datetime
-
-
-def test_initialise(device):
-    print(device.last_update)
-    assert isinstance(device.last_update, datetime.datetime)
-
-
 def test_allowed_modes(device):
     assert isinstance(device.allowedModes, list)
-
-
-def test_update(device):
-    last_update = device.last_update
-    device.update()
-    assert device.last_update > last_update
 
 
 def test_change(device):
