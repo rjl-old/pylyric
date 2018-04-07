@@ -24,7 +24,7 @@ class Schedule:
         :return: True if now() is in the active period
         """
         now = datetime.now()
-        if now >= self.active_period_start and now <= self.active_period_end:
+        if self.active_period_start <= now <= self.active_period_end:
             return True
         else:
             return False
