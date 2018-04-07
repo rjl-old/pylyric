@@ -49,6 +49,5 @@ dev/getlyricids.py
 dev/lyric.py
 
 # Config
-pylyric/config.py
-src/pylyric/config.py
+config.py
 .DS_Store
