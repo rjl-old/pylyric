@@ -67,9 +67,10 @@ class Lyric:
         devices = self.lyric_api.get('devices', params)
         return [Device.from_json(location_id, self.lyric_api, device_data) for device_data in devices]
 
-    def get_thermostat(self, location_id, device_id) -> Device:
+    def get_device(self, location_id, device_id, device_type=Device):
         """
         https://developer.honeywell.com/lyric/apis/get/devices/thermostats/%7BdeviceId%7D-0
+        :param device_type:
         :param location_id:
         :param device_id:
         :return: dict of device properties
@@ -77,26 +78,7 @@ class Lyric:
         url = f"devices/thermostats/{device_id}"
         params = {"locationId": location_id}
         data = self.lyric_api.get(url, params)
-        return Device.from_json(location_id, self.lyric_api, data)
-
-    def change_device(self, location_id, device_id, **kwargs):
-        """
-        https://developer.honeywell.com/lyric/apis/post/devices/thermostats/%7BdeviceId%7D
-        :param location_id: int
-        :param device_id: int
-        :return:
-        """
-        url = "devices/thermostats/{}".format(device_id)
-        params = {"locationId": location_id}
-
-        current_state = self.get_thermostat(location_id, device_id).changeable_values
-        for k, v in kwargs.items():
-            if k in current_state:
-                current_state[k] = v
-            else:
-                raise Exception("Unknown parameter: '{}'".format(k))
-
-        return self.lyric_api.post(url, params, payload=current_state)
+        return device_type.from_json(location_id, self.lyric_api, data)
 
 
 class LyricApi:
@@ -161,11 +143,27 @@ class LyricApi:
             return None
 
     def get(self, url, args=None, payload=None, **kwargs):
+        """
+
+        :param url:
+        :param args:
+        :param payload:
+        :param kwargs:
+        :return:
+        """
         if args:
             kwargs.update(args)
         return self._internal_call('GET', url, payload, kwargs)
 
     def post(self, url, args=None, payload=None, **kwargs):
+        """
+
+        :param url:
+        :param args:
+        :param payload:
+        :param kwargs:
+        :return:
+        """
         if args:
             kwargs.update(args)
         return self._internal_call('POST', url, payload, kwargs)

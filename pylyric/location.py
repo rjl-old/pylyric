@@ -65,8 +65,8 @@ class Location:
 
         return self._users
 
-    @staticmethod
-    def from_json(lyric_api, data: str or Dict) -> 'Location':
+    @classmethod
+    def from_json(cls, lyric_api, data: str or Dict) -> 'Location':
         """
         Converts a json object or string representation
         into a honeywell location.
@@ -77,7 +77,7 @@ class Location:
         if isinstance(data, str):
             data = json.loads(data)
 
-        return Location(
+        return cls(
             lyric_api,
             data["locationID"],
             data["name"],
