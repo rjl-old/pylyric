@@ -1,9 +1,9 @@
-from pylyric.heating_system import HeatingSystem, Lyric
+from pylyric.heating_system import HeatingSystem, T6
 import pytest
 
 def test_initialise(device):
-    heating_system: HeatingSystem = Lyric(device)
-    assert isinstance(heating_system, Lyric)
+    heating_system: HeatingSystem = T6(device)
+    assert isinstance(heating_system, T6)
 
 #
 # NOTE: These tests change the heating system!

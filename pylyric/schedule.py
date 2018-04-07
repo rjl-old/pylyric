@@ -29,7 +29,6 @@ class Schedule:
 
         now = datetime.now()
         hh_mm = time(now.hour, now.minute)
-        print(self.active_period_start)
         if self.active_period_start <= hh_mm <= self.active_period_end:
             return True
         else:

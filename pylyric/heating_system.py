@@ -13,7 +13,7 @@ class HeatingSystem(ABC):
         pass
 
 
-class Lyric(HeatingSystem):
+class T6(HeatingSystem):
     """
     Implements heating system methods for a Honeywell Lyric T6
     """
