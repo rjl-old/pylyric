@@ -5,6 +5,7 @@ import requests
 class EnvironmentSensor(ABC):
     """Base class for an environmental sensor"""
 
+    @property
     @abstractmethod
     def internal_temperature(self):
         pass
@@ -25,4 +26,4 @@ class Particle(EnvironmentSensor):
 
         r = requests.get(url, params=params)
         temperature = float(r.json()['result'])
-        return (temperature)
+        return temperature

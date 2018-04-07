@@ -1,4 +1,9 @@
 from datetime import datetime, timedelta
+
+from pylyric.environment_sensor import EnvironmentSensor
+from pylyric.heating_system import HeatingSystem
+
+
 class House:
     """
     Represents a house with a heating system and an environemnt sensor
@@ -6,7 +11,7 @@ class House:
     WARMUP_GRADIENT = 0.001637426900584798  # degC per minute
     COOLDOWN_GRADIENT = 0.001754760943355017  # degC per minute
 
-    def __init__(self, heating_system=None, environment_sensor=None):
+    def __init__(self, heating_system: HeatingSystem=None, environment_sensor: EnvironmentSensor=None):
         self.heating_system = heating_system
         self.environment_sensor = environment_sensor
 
