@@ -1,5 +1,5 @@
 # from datetime import datetime
-from datetime import datetime, time
+from datetime import datetime, date, time, timedelta
 
 
 # TODO: Need to make this time, not datetime
@@ -43,3 +43,19 @@ class Schedule:
             return self.active_period_minimum_temperature
         else:
             return self.inactive_period_minimum_temperature
+
+    @property
+    def period_end(self):
+        """
+        :return: datetime the time the current period ends
+        """
+        yyyy_mm_dd = date.today()
+        if self.is_active_period():
+            hh_mm = self.active_period_end
+            dt = datetime.combine(yyyy_mm_dd, hh_mm)
+        else:
+            hh_mm = self.active_period_start
+            dt = datetime.combine(yyyy_mm_dd, hh_mm) + timedelta(days=1)
+
+        return dt
+

@@ -23,3 +23,17 @@ class House:
         warm_up_start_time = required_time - warm_up_time
 
         return datetime.now() > warm_up_start_time
+
+    def is_time_to_stop_heating(self, required_temperature, current_temperature, required_time) -> bool:
+        """
+        Returns True if it is time to stop heating the house
+        :param required_temperature:
+        :param current_temperature:
+        :param required_time:
+        :return:
+        """
+        cool_down_time_mins = (current_temperature - required_temperature) / self.COOLDOWN_GRADIENT
+        cool_down_time = timedelta(minutes=cool_down_time_mins)
+        cool_down_start_time = required_time - cool_down_time
+
+        return datetime.now() > cool_down_start_time
