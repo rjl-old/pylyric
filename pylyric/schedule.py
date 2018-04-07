@@ -1,4 +1,5 @@
-from datetime import datetime
+# from datetime import datetime
+from datetime import datetime, time
 
 
 # TODO: Need to make this time, not datetime
@@ -25,8 +26,11 @@ class Schedule:
         """
         :return: True if now() is in the active period
         """
+
         now = datetime.now()
-        if self.active_period_start <= now <= self.active_period_end:
+        hh_mm = time(now.hour, now.minute)
+        print(self.active_period_start)
+        if self.active_period_start <= hh_mm <= self.active_period_end:
             return True
         else:
             return False
