@@ -20,7 +20,7 @@ class Particle(EnvironmentSensor):
 
     @property
     def internal_temperature(self):
-        url = "https://api.particle.io/v1/devices/{}/temperature".format(self.device_id)
+        url = f"https://api.particle.io/v1/devices/{self.device_id}/temperature"
         params = {"access_token": "51f8f2e01548da71585635f275914a49d383a4ae"}
 
         r = requests.get(url, params=params)
