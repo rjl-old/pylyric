@@ -1,6 +1,8 @@
 from datetime import datetime
 
 
+# TODO: Need to make this time, not datetime
+
 class Schedule:
     """Represents a heating schedule.
 

@@ -1,0 +1,25 @@
+from datetime import datetime, timedelta
+class House:
+    """
+    Represents a house with a heating system and an environemnt sensor
+    """
+    WARMUP_GRADIENT = 0.001637426900584798  # degC per minute
+    COOLDOWN_GRADIENT = 0.001754760943355017  # degC per minute
+
+    def __init__(self, heating_system=None, environment_sensor=None):
+        self.heating_system = heating_system
+        self.environment_sensor = environment_sensor
+
+    def is_time_to_start_heating(self, required_temperature, current_temperature, required_time) -> bool:
+        """
+        Returns True if it is time to start heating the house
+        :param required_temperature: (degC) float
+        :param current_temperature: (degC) float
+        :param required_time: datetime
+        :return bool:
+        """
+        warm_up_time_mins = (required_temperature - current_temperature) / self.WARMUP_GRADIENT
+        warm_up_time = timedelta(minutes=warm_up_time_mins)
+        warm_up_start_time = required_time - warm_up_time
+
+        return datetime.now() > warm_up_start_time
