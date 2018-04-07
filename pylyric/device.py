@@ -79,6 +79,7 @@ class Device:
         :return:
         """
         old_state = self.changeable_values
+        print(">> ", old_state)
         new_state = old_state
         for k, v in kwargs.items():
             if k in new_state:
@@ -86,5 +87,5 @@ class Device:
             else:
                 raise Exception("Unknown parameter: '{}'".format(k))
 
-        self.client.change_device(location_id=self.location_id, device_id=self.device_id, **new_state)
+        self.lyric_api.change_device(location_id=self.location_id, device_id=self.device_id, **new_state)
         self.changeable_values = new_state

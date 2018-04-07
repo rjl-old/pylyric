@@ -1,6 +1,7 @@
 from pylyric.location import Location
 from pylyric.device import Device
 
+
 def test_get_locations(lyric):
     first_location = lyric.get_locations()[0]
     assert isinstance(lyric.get_locations(), list)
