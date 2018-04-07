@@ -1,9 +1,9 @@
-from pylyric.environment_sensor import EnvironmentSensor
+from pylyric.environment_sensor import EnvironmentSensor, Particle
 
-s = EnvironmentSensor()
+particle: EnvironmentSensor = Particle()
 
 def test_initialise():
-    assert isinstance(s, EnvironmentSensor)
+    assert isinstance(particle, Particle)
 
 def test_internal_temperature():
-    assert isinstance(s.internal_temperature, float)
+    assert isinstance(particle.internal_temperature, float)
