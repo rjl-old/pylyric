@@ -1,8 +1,11 @@
-def test_allowed_modes(device):
-    assert isinstance(device.allowedModes, list)
+from pylyric.device import Device
 
 
-def test_change(device):
+def test_allowed_modes(device: Device):
+    assert isinstance(device.allowed_modes, list)
+
+
+def test_change(device: Device):
     # GIVEN a device
     # WHEN I change a changeable value
     # THEN the device changes
