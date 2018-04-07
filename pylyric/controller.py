@@ -44,5 +44,9 @@ while True:
             is_on = False
 
     print(current_temperature)
+
+    # Alex ...
     # -- write 'is_on' to influx here --
+    # if is_on != previous is_on, log
+
     time.sleep(10)
