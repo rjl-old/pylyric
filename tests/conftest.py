@@ -5,7 +5,6 @@ import pytest
 
 from pylyric.oauth2 import ApiCredentials
 from pylyric.lyric import Lyric
-from pylyric.device import Device
 from server import config as cfg
 
 credentials = ApiCredentials(

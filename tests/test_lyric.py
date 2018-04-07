@@ -17,7 +17,7 @@ def test_get_devices(lyric):
 def test_device(lyric):
     first_location = lyric.get_locations()[0]
     first_device = lyric.get_devices(first_location.location_id)[0]
-    assert isinstance(lyric.get_thermostat(first_location.location_id, first_device.device_id), Device)
+    assert isinstance(lyric.get_device(first_location.location_id, first_device.device_id), Device)
 
 
 def test_change_device(lyric):
@@ -35,11 +35,11 @@ def test_change_device(lyric):
 
     # change state and test
     print(" !! Changing device")
-    lyric.change_device(location_id=location.location_id, device_id=device.device_id, mode=new_mode)
-    new_state = lyric.get_thermostat(location.location_id, device.device_id).changeable_values
+    device.change(mode=new_mode)
+    new_state = lyric.get_device(location.location_id, device.device_id).changeable_values
     assert new_state['mode'] == new_mode
 
     # return to current state
-    lyric.change_device(location_id=location.location_id, device_id=device.device_id, mode=old_mode)
+    device.change(mode=old_mode)
     new_state = device.changeable_values
     assert new_state['mode'] == old_mode
