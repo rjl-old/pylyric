@@ -4,6 +4,8 @@ import datetime
 import json
 from typing import Dict
 
+from sanic.log import logger
+
 
 class Device:
     """
@@ -23,7 +25,7 @@ class Device:
             operation_status
     ):
 
-        self.lyric_api = lyric_api
+        self.lyric_api: 'LyricApi' = lyric_api
         self.location_id = location_id
         self.device_id = device_id
         self.changeable_values = changeable_values
@@ -35,12 +37,12 @@ class Device:
 
         self.last_update = datetime.datetime.now()
 
-    @staticmethod
-    def from_json(location_id: int, lyric_api: 'LyricApi', data: Dict or str):
+    @classmethod
+    def from_json(cls, location_id: int, lyric_api: 'LyricApi', data: Dict or str):
         if isinstance(data, str):
             data = json.loads(data)
 
-        return Device(
+        return cls(
             lyric_api,
             location_id,
             data['deviceID'],
@@ -79,7 +81,7 @@ class Device:
         :return:
         """
         old_state = self.changeable_values
-        print(">> ", old_state)
+        logger.debug(">> ", old_state)
         new_state = old_state
         for k, v in kwargs.items():
             if k in new_state:
@@ -87,5 +89,9 @@ class Device:
             else:
                 raise Exception("Unknown parameter: '{}'".format(k))
 
-        self.lyric_api.change_device(location_id=self.location_id, device_id=self.device_id, **new_state)
+        url = "devices/thermostats/{}".format(self.device_id)
+        params = {"locationId": self.location_id}
+        self.lyric_api.post(url, params, payload=new_state)
+
         self.changeable_values = new_state
+
