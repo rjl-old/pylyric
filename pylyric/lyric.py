@@ -89,14 +89,14 @@ class Lyric:
         url = "devices/thermostats/{}".format(device_id)
         params = {"locationId": location_id}
 
-        current_state = self.get_thermostat(location_id, device_id)['changeableValues']
+        current_state = self.get_thermostat(location_id, device_id).changeable_values
         for k, v in kwargs.items():
             if k in current_state:
                 current_state[k] = v
             else:
                 raise Exception("Unknown parameter: '{}'".format(k))
 
-        return self.lyric_api.get(url, params, payload=current_state)
+        return self.lyric_api.post(url, params, payload=current_state)
 
 
 class LyricApi:
