@@ -1,8 +1,8 @@
 from pylyric.schedule import Schedule
-from pylyric.environment_sensor import EnvironmentSensor, Particle
+from pylyric.environment_sensor import EnvironmentSensor
 from pylyric.heating_system import HeatingSystem, T6
 from pylyric.house import House
-from pylyric.utils import get_a_lyric_device
+from pylyric.utils import get_the_t6, get_the_photon
 import datetime
 import time
 from sanic.log import logger
@@ -17,9 +17,8 @@ schedule = Schedule(
         inactive_period_minimum_temperature=18.0
 )
 
-honeywell = get_a_lyric_device()
-
-environment_sensor: EnvironmentSensor = Particle()
+environment_sensor: EnvironmentSensor = get_the_photon()
+honeywell = get_the_t6()
 heating_system: HeatingSystem = T6(honeywell)
 house = House(environment_sensor=environment_sensor, heating_system=heating_system)
 
