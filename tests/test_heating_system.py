@@ -1,9 +1,10 @@
-from pylyric.heating_system import HeatingSystem, T6
+from pylyric.heating_system import T6
 import pytest
 
-def test_initialise(device):
-    heating_system: HeatingSystem = T6(device)
+
+def test_initialise(heating_system):
     assert isinstance(heating_system, T6)
+
 
 #
 # NOTE: These tests change the heating system!
@@ -11,11 +12,10 @@ def test_initialise(device):
 #
 
 @pytest.mark.skip(reason="Changes the heating system state!")
-def test_turn_on(device):
-    heating_system: HeatingSystem = Lyric(device)
+def test_turn_on(heating_system):
     heating_system.turn_on()
 
+
 @pytest.mark.skip(reason="Changes the heating system state!")
-def test_turn_off(device):
-    heating_system: HeatingSystem = Lyric(device)
+def test_turn_off(heating_system):
     heating_system.turn_off()

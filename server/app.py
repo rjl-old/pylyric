@@ -1,12 +1,17 @@
+import datetime
 from typing import List
 
 from sanic import Sanic
 from sanic import response
 from sanic.log import logger
 
+from pylyric.environment_sensor import EnvironmentSensor, Particle
+from pylyric.heating_system import HeatingSystem, T6
+from pylyric.house import House
 from pylyric.lyric import Lyric
 from pylyric.device import Device
 from pylyric.oauth2 import ApiCredentials
+from pylyric.schedule import Schedule
 from server import config as cfg
 from server.tasks import tasks, async_run_every
 
@@ -19,8 +24,20 @@ credentials = ApiCredentials(
     refresh_token=cfg.REFRESH_TOKEN
 )
 
+schedule = Schedule(
+    active_period_start=datetime.time(8, 0),
+    active_period_end=datetime.time(22, 0),
+    active_period_minimum_temperature=20.0,
+    inactive_period_minimum_temperature=18.0
+)
+
 lyric_client = Lyric(credentials=credentials)
 devices = lyric_client.get_locations()[0].get_devices()
+
+environment_sensor: EnvironmentSensor = Particle()
+heating_system: HeatingSystem = lyric_client.get_device("199754", "LCC-00D02DB6B4A8", T6)
+
+house = House(environment_sensor=environment_sensor, heating_system=heating_system)
 
 
 @app.route('/')
@@ -75,7 +92,31 @@ def update(devices: List[Device] or Device):
         devices.update()
 
 
+@async_run_every(seconds=600)
+def check_schedule(house: House, schedule: Schedule):
+    current_temperature = house.environment_sensor.internal_temperature
+    is_too_cold = current_temperature < schedule.minimum_temperature
+
+    if schedule.is_active_period():
+        should_be_on = is_too_cold
+    elif house.is_time_to_start_heating() or is_too_cold:
+        should_be_on = True
+    else:
+        should_be_on = False
+
+    if should_be_on != house.heating_system.on:
+
+        logger.info(f"Turning Heating {should_be_on}")
+        # todo influx goes here
+
+        if should_be_on:
+            house.heating_system.turn_on()
+        else:
+            house.heating_system.turn_off()
+
+
 app.add_task(update(devices))
+app.add_task(check_schedule(house, schedule))
 
 for task in tasks:
     app.add_task(task())

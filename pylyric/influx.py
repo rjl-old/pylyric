@@ -16,7 +16,7 @@ class Influx:
     def write(self, measurement, **kwargs):
         json_body = [
             {
-                "measurement": "{}".format(measurement),
+                "measurement": measurement,
                 "tags": {
                 },
                 "fields": kwargs
