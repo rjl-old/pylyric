@@ -1,6 +1,7 @@
 from pylyric.environment_sensor import EnvironmentSensor, Particle
+import server.config as cfg
 
-environment_sensor: EnvironmentSensor = Particle()
+environment_sensor: EnvironmentSensor = Particle(auth_token=cfg.AUTH_TOKEN, device_id=cfg.DEVICE_ID)
 
 
 def test_initialise():
