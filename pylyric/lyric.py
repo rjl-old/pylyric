@@ -17,26 +17,14 @@ class ApiCredentials:
         self.expiry_date = None
 
     def get_access_token(self):
-        """
-        Gets an api token.
-        :return: An access token.
-        :raises LyricOauthError: Expired token can't be refreshed.
-        """
         if self._is_token_expired():
             self._refresh_token()
         return self.access_token
 
     def _is_token_expired(self) -> bool:
-        """
-        Determines whether the current token is expired.
-        """
         return True if self.expiry_date is None else self.expiry_date < datetime.datetime.now()
 
     def _refresh_token(self):
-        """
-        Refreshes the authentication token.
-        :raises LyricOauthError: Problem with API.
-        """
         auth = HTTPBasicAuth(self.client_id, self.client_secret)
 
         payload = {
@@ -54,11 +42,6 @@ class ApiCredentials:
 
     @staticmethod
     def _date_seconds_from_now(seconds: int) -> datetime:
-        """
-        Returns a time that is n seconds from now.
-        :param seconds: The number of seconds.
-        :return: The datetime n seconds from now.
-        """
         return datetime.datetime.now() + datetime.timedelta(0, seconds)
 
 
