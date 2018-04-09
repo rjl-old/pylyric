@@ -8,6 +8,7 @@ from typing import List, Dict
 
 class Device:
     """Represents a single Lyric device e.g a T6 thermostat."""
+    # TODO: add update funtion to attributes
 
     def __init__(self, json, location_id, lyric):
         self.location_id = location_id
@@ -20,6 +21,17 @@ class Device:
         self.outdoor_humidity = int(json['displayedOutdoorHumidity'])
         self.mode = json['operationStatus']['mode']
         self.changeable_values = json['changeableValues']
+
+    def change(self, **kwargs):
+        for k, v in kwargs.items():
+            if k in self.changeable_values:
+                self.changeable_values[k] = v
+            else:
+                raise Exception("Unknown parameter: '{}'".format(k))
+        headers = {'Authorization': f'Bearer {self.lyric._get_access_token()}'}
+        params = {'apikey': self.lyric.client_id, 'locationId': self.location_id}
+        data = self.changeable_values
+        self.lyric.api.devices.thermostats(self.device_id).post(headers=headers, params=params, data=data)
 
 
 class Lyric:
@@ -48,25 +60,6 @@ class Lyric:
         params = {'apikey': self.client_id, 'locationId': location_id}
         return [Device(json=json, location_id=location_id, lyric=self) for json in
                 self.api.devices.get(params=params, headers=headers)]
-
-    def device(self, location_id, device_id) -> Device:
-        headers = {'Authorization': f'Bearer {self._get_access_token()}'}
-        params = {'apikey': self.client_id, 'locationId': location_id}
-        json = self.api.devices.thermostats(device_id).get(headers=headers, params=params)
-        return Device(json=json, location_id=location_id, lyric=self)
-
-    def change_device(self, location_id, device_id, **kwargs):
-        device = self.device(location_id=location_id, device_id=device_id)
-        changeable_values = device.changeable_values
-        for k, v in kwargs.items():
-            if k in changeable_values:
-                changeable_values[k] = v
-            else:
-                raise Exception("Unknown parameter: '{}'".format(k))
-        headers = {'Authorization': f'Bearer {self._get_access_token()}'}
-        params = {'apikey': self.client_id, 'locationId': location_id}
-        data = changeable_values
-        self.api.devices.thermostats(device_id).post(headers=headers, params=params, data=data)
 
     def _get_access_token(self):
         if self._is_token_expired():

@@ -14,14 +14,7 @@ class TestLyric:
         location_id = lyric.locations[0]['locationID']
         devices = lyric.devices(location_id=location_id)
         assert isinstance(devices, list)
-        assert isinstance(devices[0], Device)
-
-    def test_device(self):
-        location_id = lyric.locations[0]['locationID']
-        devices = lyric.devices(location_id=location_id)
-        device_id = devices[0].device_id
-        device = lyric.device(location_id=location_id, device_id=device_id)
-        assert device.device_id == device_id
+        assert isinstance(devices[0], Device)p
 
 
 class TestDevice:
@@ -37,10 +30,10 @@ class TestDevice:
         assert isinstance(device.mode, str)
         assert isinstance(device.changeable_values, dict)
 
-    def test_change_device(self):
+    def test_change(self):
         location_id = lyric.locations[0]['locationID']
         device = lyric.devices(location_id=location_id)[0]
-        device_id = device.device_id
+
         old_state = device.changeable_values
         old_mode = old_state['mode']
 
@@ -50,11 +43,9 @@ class TestDevice:
             new_mode = "Off"
 
         # change state and test
-        lyric.change_device(location_id=location_id, device_id=device_id, mode=new_mode)
-        device = lyric.devices(location_id=location_id)[0]
+        device.change(mode=new_mode)
         assert device.changeable_values['mode'] == new_mode
 
         # return to original state
-        lyric.change_device(location_id=location_id, device_id=device_id, mode=old_mode)
-        device = lyric.devices(location_id=location_id)[0]
+        device.change(mode=old_mode)
         assert device.changeable_values['mode'] == old_mode
