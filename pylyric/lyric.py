@@ -9,10 +9,10 @@ from typing import List, Dict
 class Device:
     """Represents a single Lyric device e.g a T6 thermostat."""
 
-    def __init__(self, json, location_id, api):
+    def __init__(self, json, location_id, lyric):
         self.location_id = location_id
         self.device_id = json['deviceID']
-        self.api = api
+        self.lyric = lyric
 
         self.name = json['name']
         self.indoor_temperature = float(json['indoorTemperature'])
@@ -46,13 +46,14 @@ class Lyric:
     def devices(self, location_id) -> List[Device]:
         headers = {'Authorization': f'Bearer {self._get_access_token()}'}
         params = {'apikey': self.client_id, 'locationId': location_id}
-        return [Device(json=json, location_id=location_id, api=self) for json in self.api.devices.get(params=params, headers=headers)]
+        return [Device(json=json, location_id=location_id, lyric=self) for json in
+                self.api.devices.get(params=params, headers=headers)]
 
     def device(self, location_id, device_id) -> Device:
         headers = {'Authorization': f'Bearer {self._get_access_token()}'}
         params = {'apikey': self.client_id, 'locationId': location_id}
         json = self.api.devices.thermostats(device_id).get(headers=headers, params=params)
-        return Device(json=json, location_id=location_id, api=self)
+        return Device(json=json, location_id=location_id, lyric=self)
 
     def change_device(self, location_id, device_id, **kwargs):
         device = self.device(location_id=location_id, device_id=device_id)
