@@ -1,26 +1,6 @@
-from pylyric.lyric import ApiCredentials, Lyric, Device
-import server.config as cfg
+from pylyric.lyric import Lyric, Device
 
 lyric = Lyric()
-
-
-class TestApiCredentials:
-
-    def test_refresh_token(self):
-        """
-        Tests the refresh token function to make sure
-        a new api key is given from the server.
-        """
-        api = ApiCredentials(
-                client_id=cfg.CLIENT_ID,
-                client_secret=cfg.CLIENT_SECRET,
-                access_token=cfg.ACCESS_TOKEN,
-                refresh_token=cfg.REFRESH_TOKEN
-        )
-
-        token = api.access_token
-        api._refresh_token()
-        assert api.access_token != token
 
 
 class TestLyric:

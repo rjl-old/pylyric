@@ -6,17 +6,68 @@ from requests.auth import HTTPBasicAuth
 from typing import List, Dict
 
 
-class ApiCredentials:
+class Device:
+    """Represents a single Lyric device e.g a T6 thermostat."""
+
+    def __init__(self, json, location_id, api):
+        self.location_id = location_id
+        self.device_id = json['deviceID']
+        self.api = api
+
+        self.name = json['name']
+        self.indoor_temperature = float(json['indoorTemperature'])
+        self.outdoor_temperature = float(json['outdoorTemperature'])
+        self.outdoor_humidity = int(json['displayedOutdoorHumidity'])
+        self.mode = json['operationStatus']['mode']
+        self.changeable_values = json['changeableValues']
+
+
+class Lyric:
+    """Represents a Honeywell Lyric API client."""
+
     TOKEN_URL = "https://api.honeywell.com/oauth2/token"
 
-    def __init__(self, client_id, client_secret, access_token, refresh_token):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.access_token = access_token
-        self.refresh_token = refresh_token
+    def __init__(self, config=config):
+
+        self.client_id = config.CLIENT_ID
+        self.client_secret = config.CLIENT_SECRET
+        self.access_token = config.ACCESS_TOKEN
+        self.refresh_token = config.REFRESH_TOKEN
         self.expiry_date = None
 
-    def get_access_token(self):
+        self.api = tortilla.wrap('https://api.honeywell.com/v2/')
+
+    @property
+    def locations(self) -> List[Dict]:
+        headers = {'Authorization': f'Bearer {self._get_access_token()}'}
+        params = {'apikey': self.client_id}
+        return self.api.locations.get(params=params, headers=headers)
+
+    def devices(self, location_id) -> List[Device]:
+        headers = {'Authorization': f'Bearer {self._get_access_token()}'}
+        params = {'apikey': self.client_id, 'locationId': location_id}
+        return [Device(json=json, location_id=location_id, api=self) for json in self.api.devices.get(params=params, headers=headers)]
+
+    def device(self, location_id, device_id) -> Device:
+        headers = {'Authorization': f'Bearer {self._get_access_token()}'}
+        params = {'apikey': self.client_id, 'locationId': location_id}
+        json = self.api.devices.thermostats(device_id).get(headers=headers, params=params)
+        return Device(json=json, location_id=location_id, api=self)
+
+    def change_device(self, location_id, device_id, **kwargs):
+        device = self.device(location_id=location_id, device_id=device_id)
+        changeable_values = device.changeable_values
+        for k, v in kwargs.items():
+            if k in changeable_values:
+                changeable_values[k] = v
+            else:
+                raise Exception("Unknown parameter: '{}'".format(k))
+        headers = {'Authorization': f'Bearer {self._get_access_token()}'}
+        params = {'apikey': self.client_id, 'locationId': location_id}
+        data = changeable_values
+        self.api.devices.thermostats(device_id).post(headers=headers, params=params, data=data)
+
+    def _get_access_token(self):
         if self._is_token_expired():
             self._refresh_token()
         return self.access_token
@@ -43,59 +94,3 @@ class ApiCredentials:
     @staticmethod
     def _date_seconds_from_now(seconds: int) -> datetime:
         return datetime.datetime.now() + datetime.timedelta(0, seconds)
-
-
-class Device:
-    """Represents a single Lyric device e.g a T6 thermostat."""
-
-    def __init__(self, json):
-        self.device_id = json['deviceID']
-        self.name = json['name']
-        self.indoor_temperature = float(json['indoorTemperature'])
-        self.outdoor_temperature = float(json['outdoorTemperature'])
-        self.outdoor_humidity = int(json['displayedOutdoorHumidity'])
-        self.mode = json['operationStatus']['mode']
-        self.changeable_values = json['changeableValues']
-
-
-class Lyric:
-    """Represents a Honeywell Lyric API client."""
-
-    def __init__(self, config=config):
-        self.auth = ApiCredentials(
-                client_id=config.CLIENT_ID,
-                client_secret=config.CLIENT_SECRET,
-                access_token=config.ACCESS_TOKEN,
-                refresh_token=config.REFRESH_TOKEN
-        )
-        self.api = tortilla.wrap('https://api.honeywell.com/v2/')
-
-    @property
-    def locations(self) -> List[Dict]:
-        headers = {'Authorization': f'Bearer {self.auth.get_access_token()}'}
-        params = {'apikey': self.auth.client_id}
-        return self.api.locations.get(params=params, headers=headers)
-
-    def devices(self, location_id) -> List[Device]:
-        headers = {'Authorization': f'Bearer {self.auth.get_access_token()}'}
-        params = {'apikey': self.auth.client_id, 'locationId': location_id}
-        return [Device(json) for json in self.api.devices.get(params=params, headers=headers)]
-
-    def device(self, location_id, device_id) -> Device:
-        headers = {'Authorization': f'Bearer {self.auth.get_access_token()}'}
-        params = {'apikey': self.auth.client_id, 'locationId': location_id}
-        json = self.api.devices.thermostats(device_id).get(headers=headers, params=params)
-        return Device(json)
-
-    def change_device(self, location_id, device_id, **kwargs):
-        device = self.device(location_id=location_id, device_id=device_id)
-        changeable_values = device.changeable_values
-        for k, v in kwargs.items():
-            if k in changeable_values:
-                changeable_values[k] = v
-            else:
-                raise Exception("Unknown parameter: '{}'".format(k))
-        headers = {'Authorization': f'Bearer {self.auth.get_access_token()}'}
-        params = {'apikey': self.auth.client_id, 'locationId': location_id}
-        data = changeable_values
-        self.api.devices.thermostats(device_id).post(headers=headers, params=params, data=data)
