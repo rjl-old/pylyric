@@ -52,7 +52,7 @@ class Lyric:
 
         self.devices = self._get_devices()
 
-    def _get_devices(self):
+    def _get_devices(self) -> List[Device]:
         devices = []
         headers = {'Authorization': f'Bearer {self._get_access_token()}'}
         params = {'apikey': self.client_id}
@@ -63,7 +63,7 @@ class Lyric:
                 devices.append(Device(json=device_json, location_id=location_id, lyric=self))
         return devices
 
-    def _get_access_token(self):
+    def _get_access_token(self) -> str:
         if self._is_token_expired():
             self._refresh_token()
         return self.access_token
