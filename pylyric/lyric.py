@@ -8,7 +8,8 @@ from typing import List, Dict
 
 class Device:
     """Represents a single Lyric device e.g a T6 thermostat."""
-    # TODO: add update funtion to attributes
+
+    # TODO: add update function to attributes
 
     def __init__(self, json, location_id, lyric):
         self.location_id = location_id
@@ -49,17 +50,18 @@ class Lyric:
 
         self.api = tortilla.wrap('https://api.honeywell.com/v2/')
 
-    @property
-    def locations(self) -> List[Dict]:
+        self.devices = self._get_devices()
+
+    def _get_devices(self):
+        devices = []
         headers = {'Authorization': f'Bearer {self._get_access_token()}'}
         params = {'apikey': self.client_id}
-        return self.api.locations.get(params=params, headers=headers)
-
-    def devices(self, location_id) -> List[Device]:
-        headers = {'Authorization': f'Bearer {self._get_access_token()}'}
-        params = {'apikey': self.client_id, 'locationId': location_id}
-        return [Device(json=json, location_id=location_id, lyric=self) for json in
-                self.api.devices.get(params=params, headers=headers)]
+        locations = self.api.locations.get(params=params, headers=headers)
+        for location in locations:
+            location_id = location['locationID']
+            for device_json in location['devices']:
+                devices.append(Device(json=device_json, location_id=location_id, lyric=self))
+        return devices
 
     def _get_access_token(self):
         if self._is_token_expired():

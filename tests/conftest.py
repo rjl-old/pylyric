@@ -32,6 +32,6 @@ import pytest
 #     return thermostat
 #
 #
-# @pytest.fixture(scope="module")
-# def heating_system():
-#     return lyric_client.get_device("199754", "LCC-00D02DB6B4A8", T6)
+@pytest.fixture(scope="module")
+def heating_system():
+    return lyric_client.get_device("199754", "LCC-00D02DB6B4A8", T6)
