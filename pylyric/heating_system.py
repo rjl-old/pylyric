@@ -58,6 +58,10 @@ class Device(HeatingSystem):
         json = self._update()
         return json['operationStatus']['mode']
 
+    @property
+    def is_on(self) -> bool:
+        return True if self._on else False
+
     def change(self, **kwargs):
         changeable_values = self.changeable_values
         for k, v in kwargs.items():
@@ -69,15 +73,6 @@ class Device(HeatingSystem):
         params = {'apikey': self.lyric.client_id, 'locationId': self.location_id}
         self.lyric.api.devices.thermostats(self.device_id).post(headers=headers, params=params, data=changeable_values)
 
-    def _update(self):
-        headers = {'Authorization': f'Bearer {self.lyric._get_access_token()}'}
-        params = {'apikey': self.lyric.client_id, 'locationId': self.location_id}
-        device_json = self.lyric.api.devices.thermostats(self.device_id).get(headers=headers, params=params)
-        return device_json
-
-    def __repr__(self):
-        return f"DEVICE: {self.name}"
-
     def turn_on(self):
         self._on = True
         self.change(mode="Heat", heatSetpoint=self.ON_TEMPERATURE, thermostatSetpointStatus="PermanentHold")
@@ -86,6 +81,11 @@ class Device(HeatingSystem):
         self._on = False
         self.change(mode="Off", heatSetpoint=self.OFF_TEMPERATURE, thermostatSetpointStatus="PermanentHold")
 
-    @property
-    def is_on(self) -> bool:
-        return True if self._on else False
+    def _update(self):
+        headers = {'Authorization': f'Bearer {self.lyric._get_access_token()}'}
+        params = {'apikey': self.lyric.client_id, 'locationId': self.location_id}
+        device_json = self.lyric.api.devices.thermostats(self.device_id).get(headers=headers, params=params)
+        return device_json
+
+    def __repr__(self):
+        return f"DEVICE: {self.name}"
