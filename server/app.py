@@ -123,6 +123,7 @@ def check_schedule(house: House, schedule: Schedule):
 
     logger.info(status)
     db.write("controller", heating=heating_system.is_on)
+    db.write("controller", minimum_temperture=schedule.minimum_temperature)
 
 
 app.add_task(check_schedule(house, schedule))
