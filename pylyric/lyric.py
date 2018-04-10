@@ -9,8 +9,6 @@ from typing import List
 class Device:
     """Represents a single Lyric device e.g a T6 thermostat."""
 
-    # TODO: add update function to attributes
-
     def __init__(self, json, location_id, lyric):
         self.location_id = location_id
         self.device_id = json['deviceID']
