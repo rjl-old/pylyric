@@ -37,27 +37,31 @@ class Device(HeatingSystem):
     @property
     def changeable_values(self):
         json = self._update()
-        return json['changeableValues']
+        return json.get('changeableValues', None)
 
     @property
     def indoor_temperature(self):
         json = self._update()
-        return float(json['indoorTemperature'])
+        if json:
+            return float(json['indoorTemperature'])
+        else:
+            return None
 
-    @property
-    def outdoor_temperature(self):
-        json = self._update()
-        return float(json['outdoorTemperature'])
-
-    @property
-    def outdoor_humidity(self):
-        json = self._update()
-        return int(json['displayedOutdoorHumidity'])
-
-    @property
-    def mode(self):
-        json = self._update()
-        return json['operationStatus']['mode']
+    # @property
+    # def outdoor_temperature(self):
+    #     json = self._update()
+    #     if jsonp
+    #     return float(json['outdoorTemperature'])
+    #
+    # @property
+    # def outdoor_humidity(self):
+    #     json = self._update()
+    #     return int(json['displayedOutdoorHumidity'])
+    #
+    # @property
+    # def mode(self):
+    #     json = self._update()
+    #     return json['operationStatus']['mode']
 
     @property
     def is_on(self) -> bool:
