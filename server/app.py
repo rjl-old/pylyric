@@ -78,8 +78,6 @@ async def get_last_update(request):
 
 @async_run_every(seconds=UPDATE_FREQUENCY)
 def check_schedule(house: House, schedule: Schedule):
-    old_is_on = None
-
     current_temperature = house.environment_sensor.internal_temperature
     is_too_cold = current_temperature < schedule.minimum_temperature
 
@@ -109,12 +107,12 @@ def check_schedule(house: House, schedule: Schedule):
             house.heating_system.turn_off()
             is_on = False
 
-    if is_on != old_is_on:
-        if is_on:
-            logger.info("Heating on")
-        else:
-            logger.info("Heating off")
-    old_is_on = is_on
+    status = f"T:{round(current_temperature,1)}, M:{round(schedule.minimum_temperature,1)}"
+    if house.heating_system.is_on:
+        status += ", ON"
+    else:
+        status += ", OFF"
+    logger.info(status)
 
 
 app.add_task(check_schedule(house, schedule))
