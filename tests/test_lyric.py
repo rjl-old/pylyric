@@ -15,11 +15,11 @@ class TestDevice:
         device = lyric.devices[0]
         assert isinstance(device.device_id, str)
         assert isinstance(device.name, str)
+        assert isinstance(device.changeable_values, dict)
         assert isinstance(device.indoor_temperature, float)
         assert isinstance(device.outdoor_temperature, float)
         assert isinstance(device.outdoor_humidity, int)
         assert isinstance(device.mode, str)
-        assert isinstance(device.changeable_values, dict)
 
     def test_change(self):
         device = lyric.devices[0]

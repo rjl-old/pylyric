@@ -15,24 +15,49 @@ class Device:
         self.location_id = location_id
         self.device_id = json['deviceID']
         self.lyric = lyric
-
         self.name = json['name']
-        self.indoor_temperature = float(json['indoorTemperature'])
-        self.outdoor_temperature = float(json['outdoorTemperature'])
-        self.outdoor_humidity = int(json['displayedOutdoorHumidity'])
-        self.mode = json['operationStatus']['mode']
-        self.changeable_values = json['changeableValues']
+
+    @property
+    def changeable_values(self):
+        json = self._update()
+        return json['changeableValues']
+
+    @property
+    def indoor_temperature(self):
+        json = self._update()
+        return float(json['indoorTemperature'])
+
+    @property
+    def outdoor_temperature(self):
+        json = self._update()
+        return float(json['outdoorTemperature'])
+
+    @property
+    def outdoor_humidity(self):
+        json = self._update()
+        return int(json['displayedOutdoorHumidity'])
+
+    @property
+    def mode(self):
+        json = self._update()
+        return json['operationStatus']['mode']
 
     def change(self, **kwargs):
+        changeable_values = self.changeable_values
         for k, v in kwargs.items():
-            if k in self.changeable_values:
-                self.changeable_values[k] = v
+            if k in changeable_values:
+                changeable_values[k] = v
             else:
                 raise Exception("Unknown parameter: '{}'".format(k))
         headers = {'Authorization': f'Bearer {self.lyric._get_access_token()}'}
         params = {'apikey': self.lyric.client_id, 'locationId': self.location_id}
-        data = self.changeable_values
-        self.lyric.api.devices.thermostats(self.device_id).post(headers=headers, params=params, data=data)
+        self.lyric.api.devices.thermostats(self.device_id).post(headers=headers, params=params, data=changeable_values)
+
+    def _update(self):
+        headers = {'Authorization': f'Bearer {self.lyric._get_access_token()}'}
+        params = {'apikey': self.lyric.client_id, 'locationId': self.location_id}
+        device_json = self.lyric.api.devices.thermostats(self.device_id).get(headers=headers, params=params)
+        return device_json
 
 
 class Lyric:
@@ -85,7 +110,7 @@ class Lyric:
             self.access_token = response.json()['access_token']
             self.expiry_date = self._date_seconds_from_now(int(response.json()['expires_in']))
         else:
-            raise LyricOauthError(f"Couldn't refresh token: {response.json()}")
+            raise RuntimeError(f"Couldn't refresh token: {response.json()}")
 
     @staticmethod
     def _date_seconds_from_now(seconds: int) -> datetime:
