@@ -14,7 +14,7 @@ class HeatingSystem(ABC):
 
     @property
     @abstractmethod
-    def on(self):
+    def is_on(self):
         pass
 
 
@@ -23,14 +23,15 @@ class Device(HeatingSystem):
     Implements heating system methods for a Honeywell Lyric T6
     """
 
-    ON_TEMPERATURE = 25
-    OFF_TEMPERATURE = 15
+    ON_TEMPERATURE = 25  # degC - arbitrary, just need 'hot'
+    OFF_TEMPERATURE = 15  # degC - arbitrary, just need 'cold'
 
     def __init__(self, json, location_id, lyric):
-        self.location_id = location_id
         self.device_id = json['deviceID']
-        self.lyric = lyric
         self.name = json['name']
+        self.location_id = location_id
+        self.lyric = lyric
+        self._on = None
 
     @property
     def changeable_values(self):
@@ -82,9 +83,9 @@ class Device(HeatingSystem):
         self.change(mode="Heat", heatSetpoint=self.ON_TEMPERATURE, thermostatSetpointStatus="PermanentHold")
 
     def turn_off(self):
-        self._off = False
+        self._on = False
         self.change(mode="Off", heatSetpoint=self.OFF_TEMPERATURE, thermostatSetpointStatus="PermanentHold")
 
     @property
-    def on(self) -> bool or None:
-        return self._on if self._on else None
+    def is_on(self) -> bool:
+        return True if self._on else False

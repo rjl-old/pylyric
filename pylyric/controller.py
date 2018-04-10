@@ -18,18 +18,19 @@ schedule = Schedule(
         inactive_period_minimum_temperature=18.0
 )
 
-lyric = Lyric()
+photon = Photon(auth_token=cfg.AUTH_TOKEN, device_id=cfg.DEVICE_ID)
+device = Lyric().devices[0]
 
-environment_sensor: EnvironmentSensor = Photon(auth_token=cfg.AUTH_TOKEN, device_id=cfg.DEVICE_ID)
-heating_system: HeatingSystem = lyric.devices[0]
+environment_sensor: EnvironmentSensor = photon
+heating_system: HeatingSystem = device
 
 house = House(environment_sensor=environment_sensor, heating_system=heating_system)
 
-old_is_on = False
-is_on = False
 
 # main Loop
 while True:
+    old_is_on = None
+
     current_temperature = house.environment_sensor.internal_temperature
     is_too_cold = current_temperature < schedule.minimum_temperature
 
@@ -67,6 +68,6 @@ while True:
     old_is_on = is_on
     print(current_temperature)
 
-    db.write("controller", heating=is_on)
+    db.write("controller", heating=heating_system.is_on)
 
     time.sleep(10)
