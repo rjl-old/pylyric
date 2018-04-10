@@ -3,7 +3,7 @@ import server.config as config
 import tortilla
 import requests
 from requests.auth import HTTPBasicAuth
-from typing import List, Dict
+from typing import List
 
 
 class Device:
