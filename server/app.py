@@ -16,7 +16,7 @@ UPDATE_FREQUENCY = 60  # seconds
 
 app = Sanic()
 
-db = Influx(db_name="test")
+db = Influx(db_name="KW-HEATING")
 
 schedule = Schedule(
         active_period_start=datetime.time(8, 0),
