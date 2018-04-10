@@ -15,28 +15,28 @@ class House:
         self.heating_system = heating_system
         self.environment_sensor = environment_sensor
 
-    def is_time_to_start_heating(self, required_temperature, current_temperature, required_time) -> bool:
+    def is_time_to_start_heating(self, schedule) -> bool:
         """
         Returns True if it is time to start heating the house
-        :param required_temperature: (degC) float
-        :param current_temperature: (degC) float
-        :param required_time: datetime
-        :return bool:
         """
+        required_temperature = schedule.minimum_temperature
+        required_time = schedule.period_end
+        current_temperature=self.environment_sensor.internal_temperature
+
         warm_up_time_mins = (required_temperature - current_temperature) / self.WARMUP_GRADIENT
         warm_up_time = timedelta(minutes=warm_up_time_mins)
         warm_up_start_time = required_time - warm_up_time
 
         return datetime.now() > warm_up_start_time
 
-    def is_time_to_stop_heating(self, required_temperature, current_temperature, required_time) -> bool:
+    def is_time_to_stop_heating(self, schedule) -> bool:
         """
         Returns True if it is time to stop heating the house
-        :param required_temperature:
-        :param current_temperature:
-        :param required_time:
-        :return:
         """
+        required_temperature = schedule.minimum_temperature
+        required_time = schedule.period_end
+        current_temperature=self.environment_sensor.internal_temperature
+
         cool_down_time_mins = (current_temperature - required_temperature) / self.COOLDOWN_GRADIENT
         cool_down_time = timedelta(minutes=cool_down_time_mins)
         cool_down_start_time = required_time - cool_down_time

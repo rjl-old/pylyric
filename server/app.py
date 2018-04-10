@@ -83,10 +83,7 @@ def check_schedule(house: House, schedule: Schedule):
 
     if schedule.is_active_period():
 
-        if (not is_too_cold) or house.is_time_to_stop_heating(
-                required_temperature=schedule.minimum_temperature,
-                current_temperature=current_temperature,
-                required_time=schedule.period_end):
+        if (not is_too_cold) or house.is_time_to_stop_heating(schedule):
 
             house.heating_system.turn_off()
             is_on = False
@@ -96,10 +93,7 @@ def check_schedule(house: House, schedule: Schedule):
 
     else:
 
-        if is_too_cold or house.is_time_to_start_heating(
-                required_temperature=schedule.minimum_temperature,
-                current_temperature=current_temperature,
-                required_time=schedule.period_end):
+        if is_too_cold or house.is_time_to_start_heating(schedule):
 
             house.heating_system.turn_on()
             is_on = True
@@ -112,6 +106,14 @@ def check_schedule(house: House, schedule: Schedule):
         status += ", ON"
     else:
         status += ", OFF"
+
+    if house.is_time_to_start_heating(schedule):
+        status += ", PRE-WARM"
+        db.write("controller", pre_warm=True)
+    elif house.is_time_to_stop_heating(schedule):
+        status += ", COOL-DOWN"
+        db.write("controller", cool_down=True)
+
     logger.info(status)
     db.write("controller", heating=heating_system.is_on)
 
