@@ -113,6 +113,7 @@ def check_schedule(house: House, schedule: Schedule):
     else:
         status += ", OFF"
     logger.info(status)
+    db.write("controller", heating=heating_system.is_on)
 
 
 app.add_task(check_schedule(house, schedule))
