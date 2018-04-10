@@ -59,6 +59,9 @@ class Device:
         device_json = self.lyric.api.devices.thermostats(self.device_id).get(headers=headers, params=params)
         return device_json
 
+    def __repr__(self):
+        return f"DEVICE: {self.name}"
+
 
 class Lyric:
     """Represents a Honeywell Lyric API client."""
