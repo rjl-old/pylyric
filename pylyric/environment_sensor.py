@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABC
+from sanic.log import logger
 import tortilla
 
 
@@ -22,7 +23,17 @@ class Photon(EnvironmentSensor):
 
     @property
     def internal_temperature(self):
-        result = self.api.temperature.get(params={'access_token': self.auth_token})
-        return float(result['result'])
+        MAX_TRIES = 3
+        tries = 0
+        result = None
+        while tries < MAX_TRIES:
+            try:
+                result = self.api.temperature.get(params={'access_token': self.auth_token})
+                result = float(result['result'])
+                break
+            except Exception as e:
+                tries += 1
+                logger.error("Failed to get photon internal temperature")
+        return result
 
 
