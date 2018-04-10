@@ -1,41 +1,35 @@
 import datetime
-from typing import List
 
-from sanic import Sanic
-from sanic import response
+from sanic import Sanic, response
 from sanic.log import logger
 
-from pylyric.environment_sensor import EnvironmentSensor, Particle
-from pylyric.heating_system import HeatingSystem, T6
+from pylyric.environment_sensor import EnvironmentSensor, Photon
+from pylyric.heating_system import HeatingSystem
 from pylyric.house import House
+from pylyric.influx import Influx
 from pylyric.lyric import Lyric
-from pylyric.device import Device
-from pylyric.oauth2 import ApiCredentials
 from pylyric.schedule import Schedule
 from server import config as cfg
-from server.tasks import tasks, async_run_every
+from server.tasks import async_run_every, tasks
+
+UPDATE_FREQUENCY = 60  # seconds
 
 app = Sanic()
 
-credentials = ApiCredentials(
-    client_id=cfg.CLIENT_ID,
-    client_secret=cfg.CLIENT_SECRET,
-    access_token=cfg.ACCESS_TOKEN,
-    refresh_token=cfg.REFRESH_TOKEN
-)
+db = Influx(db_name="test")
 
 schedule = Schedule(
-    active_period_start=datetime.time(8, 0),
-    active_period_end=datetime.time(22, 0),
-    active_period_minimum_temperature=20.0,
-    inactive_period_minimum_temperature=18.0
+        active_period_start=datetime.time(8, 0),
+        active_period_end=datetime.time(22, 0),
+        active_period_minimum_temperature=20.0,
+        inactive_period_minimum_temperature=18.0
 )
 
-lyric_client = Lyric(credentials=credentials)
-devices = lyric_client.get_locations()[0].get_devices()
+photon = Photon(auth_token=cfg.AUTH_TOKEN, device_id=cfg.DEVICE_ID)
+device = Lyric().devices[0]
 
-environment_sensor: EnvironmentSensor = Particle()
-heating_system: HeatingSystem = lyric_client.get_device("199754", "LCC-00D02DB6B4A8", T6)
+environment_sensor: EnvironmentSensor = photon
+heating_system: HeatingSystem = device
 
 house = House(environment_sensor=environment_sensor, heating_system=heating_system)
 
@@ -82,40 +76,47 @@ async def get_last_update(request):
     return response.json([{'lastUpdate': str(device.last_update)} for device in devices])
 
 
-@async_run_every(seconds=600)
-def update(devices: List[Device] or Device):
-    logger.info("Updating Devices")
-    if isinstance(devices, list):
-        for device in devices:
-            device.update()
-    else:
-        devices.update()
-
-
-@async_run_every(seconds=600)
+@async_run_every(seconds=UPDATE_FREQUENCY)
 def check_schedule(house: House, schedule: Schedule):
+    old_is_on = None
+
     current_temperature = house.environment_sensor.internal_temperature
     is_too_cold = current_temperature < schedule.minimum_temperature
 
     if schedule.is_active_period():
-        should_be_on = is_too_cold
-    elif house.is_time_to_start_heating() or is_too_cold:
-        should_be_on = True
-    else:
-        should_be_on = False
 
-    if should_be_on != house.heating_system.on:
+        if (not is_too_cold) or house.is_time_to_stop_heating(
+                required_temperature=schedule.minimum_temperature,
+                current_temperature=current_temperature,
+                required_time=schedule.period_end):
 
-        logger.info(f"Turning Heating {should_be_on}")
-        # todo influx goes here
-
-        if should_be_on:
+            house.heating_system.turn_off()
+            is_on = False
+        else:
             house.heating_system.turn_on()
+            is_on = True
+
+    else:
+
+        if is_too_cold or house.is_time_to_start_heating(
+                required_temperature=schedule.minimum_temperature,
+                current_temperature=current_temperature,
+                required_time=schedule.period_end):
+
+            house.heating_system.turn_on()
+            is_on = True
         else:
             house.heating_system.turn_off()
+            is_on = False
+
+    if is_on != old_is_on:
+        if is_on:
+            logger.info("Heating on")
+        else:
+            logger.info("Heating off")
+    old_is_on = is_on
 
 
-app.add_task(update(devices))
 app.add_task(check_schedule(house, schedule))
 
 for task in tasks:
