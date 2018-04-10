@@ -44,6 +44,8 @@ class Schedule:
         else:
             return self.inactive_period_minimum_temperature
 
+
+
     @property
     def period_end(self):
         """

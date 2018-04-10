@@ -15,11 +15,11 @@ class House:
         self.heating_system = heating_system
         self.environment_sensor = environment_sensor
 
-    def is_time_to_start_heating(self, schedule) -> bool:
+    def is_time_to_warm_up(self, schedule) -> bool:
         """
         Returns True if it is time to start heating the house
         """
-        required_temperature = schedule.minimum_temperature
+        required_temperature = schedule.active_period_minimum_temperature
         required_time = schedule.period_end
         current_temperature=self.environment_sensor.internal_temperature
 
@@ -29,11 +29,11 @@ class House:
 
         return datetime.now() > warm_up_start_time
 
-    def is_time_to_stop_heating(self, schedule) -> bool:
+    def is_time_to_cool_down(self, schedule) -> bool:
         """
         Returns True if it is time to stop heating the house
         """
-        required_temperature = schedule.minimum_temperature
+        required_temperature = schedule.inactive_period_minimum_temperature
         required_time = schedule.period_end
         current_temperature=self.environment_sensor.internal_temperature
 

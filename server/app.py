@@ -78,25 +78,29 @@ async def get_last_update(request):
 
 @async_run_every(seconds=UPDATE_FREQUENCY)
 def check_schedule(house: House, schedule: Schedule):
+
     current_temperature = house.environment_sensor.internal_temperature
-    is_too_cold = current_temperature < schedule.minimum_temperature
 
     if schedule.is_active_period():
 
-        if (not is_too_cold) or house.is_time_to_stop_heating(schedule):
+        is_too_cold = current_temperature < schedule.active_period_minimum_temperature
 
+        if (not is_too_cold) or house.is_time_to_cool_down(schedule):
             house.heating_system.turn_off()
             is_on = False
+
         else:
             house.heating_system.turn_on()
             is_on = True
 
-    else:
+    else: # is inactive period
 
-        if is_too_cold or house.is_time_to_start_heating(schedule):
+        is_too_cold = current_temperature < schedule.inactive_period_minimum_temperature
 
+        if is_too_cold or house.is_time_to_warm_up(schedule):
             house.heating_system.turn_on()
             is_on = True
+
         else:
             house.heating_system.turn_off()
             is_on = False
@@ -107,10 +111,11 @@ def check_schedule(house: House, schedule: Schedule):
     else:
         status += ", OFF"
 
-    if house.is_time_to_start_heating(schedule):
+    if house.is_time_to_warm_up(schedule):
         status += ", PRE-WARM"
         db.write("controller", pre_warm=True)
-    elif house.is_time_to_stop_heating(schedule):
+
+    elif house.is_time_to_cool_down(schedule):
         status += ", COOL-DOWN"
         db.write("controller", cool_down=True)
 
