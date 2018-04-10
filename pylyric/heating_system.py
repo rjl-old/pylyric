@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 
-from pylyric.device import Device
+from pylyric.lyric import Device
 
 
 class HeatingSystem(ABC):
