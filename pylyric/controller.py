@@ -1,12 +1,13 @@
+from pylyric.lyric import Lyric
 from pylyric.schedule import Schedule
-from pylyric.environment_sensor import EnvironmentSensor
-from pylyric.heating_system import HeatingSystem, T6
+from pylyric.environment_sensor import EnvironmentSensor, Photon
+from pylyric.heating_system import HeatingSystem
 from pylyric.house import House
-from pylyric.utils import get_the_t6, get_the_photon
 import datetime
 import time
 from sanic.log import logger
 from pylyric.influx import Influx
+import server.config as cfg
 
 db = Influx(db_name="test")
 
@@ -17,9 +18,11 @@ schedule = Schedule(
         inactive_period_minimum_temperature=18.0
 )
 
-environment_sensor: EnvironmentSensor = get_the_photon()
-honeywell = get_the_t6()
-heating_system: HeatingSystem = T6(honeywell)
+lyric = Lyric()
+
+environment_sensor: EnvironmentSensor = Photon(auth_token=cfg.AUTH_TOKEN, device_id=cfg.DEVICE_ID)
+heating_system: HeatingSystem = lyric.devices[0]
+
 house = House(environment_sensor=environment_sensor, heating_system=heating_system)
 
 old_is_on = False

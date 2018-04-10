@@ -1,16 +1,11 @@
 from pylyric.lyric import Lyric
-from pylyric.heating_system import HeatingSystem, T6
-import pytest
+from pylyric.heating_system import HeatingSystem
 
 lyric = Lyric()
-device = lyric.devices[0]
-
-heating_system: HeatingSystem = T6(device)
+heating_system: HeatingSystem = lyric.devices[0]
 #
 def test_initialise():
-    print(device)
-    print(heating_system)
-    # assert isinstance(heating_system, T6)
+    assert isinstance(heating_system, HeatingSystem)
 
 
 #

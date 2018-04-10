@@ -1,14 +1,11 @@
 from pylyric.environment_sensor import EnvironmentSensor, Photon
-from pylyric.particle import Particle
 import server.config as cfg
 
-particle = Particle(auth_token=cfg.AUTH_TOKEN, device_id=cfg.DEVICE_ID)
-
-environment_sensor: EnvironmentSensor = Photon(particle)
+environment_sensor: EnvironmentSensor = Photon(auth_token=cfg.AUTH_TOKEN, device_id=cfg.DEVICE_ID)
 
 
 def test_initialise():
-    assert isinstance(environment_sensor, Particle)
+    assert isinstance(environment_sensor, EnvironmentSensor)
 
 
 def test_internal_temperature():
