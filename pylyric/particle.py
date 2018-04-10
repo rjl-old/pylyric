@@ -9,6 +9,6 @@ class Particle:
         self.api = tortilla.wrap(f'https://api.particle.io/v1/devices/{device_id}')
 
     @property
-    def internal_temperture(self):
+    def internal_temperature(self):
         result = self.api.temperature.get(params={'access_token': self.auth_token})
         return float(result['result'])
