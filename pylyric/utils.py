@@ -29,7 +29,9 @@ def get_the_t6():
     )
     lyric_client = Lyric(credentials=credentials)
     location_id = lyric_client.get_locations()[0].location_id
-    return lyric_client.get_devices(location_id)[0]
+    honeywell = lyric_client.get_devices(location_id)[0]
+    honeywell.__class__ = T6
+    return honeywell
 
 def get_the_photon():
     return Particle(auth_token=cfg.AUTH_TOKEN, device_id=cfg.DEVICE_ID)
