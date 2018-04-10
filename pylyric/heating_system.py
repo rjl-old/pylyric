@@ -37,7 +37,10 @@ class Device(HeatingSystem):
     @property
     def changeable_values(self):
         json = self._update()
-        return json.get('changeableValues', None)
+        if json:
+            return json.get('changeableValues', None)
+        else:
+            return None
 
     @property
     def indoor_temperature(self):
