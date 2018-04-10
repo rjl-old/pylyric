@@ -9,6 +9,8 @@ from sanic.log import logger
 from pylyric.influx import Influx
 import server.config as cfg
 
+UPDATE_FREQUENCY = 60 # seconds
+
 db = Influx(db_name="test")
 
 schedule = Schedule(
@@ -70,4 +72,4 @@ while True:
 
     db.write("controller", heating=heating_system.is_on)
 
-    time.sleep(10)
+    time.sleep(UPDATE_FREQUENCY)
