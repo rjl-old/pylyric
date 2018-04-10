@@ -14,7 +14,7 @@ class TestLyric:
         location_id = lyric.locations[0]['locationID']
         devices = lyric.devices(location_id=location_id)
         assert isinstance(devices, list)
-        assert isinstance(devices[0], Device)p
+        assert isinstance(devices[0], Device)
 
 
 class TestDevice:
