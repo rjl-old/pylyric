@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABC
+from sanic.log import logger
 
 
 class HeatingSystem(ABC):
@@ -82,9 +83,19 @@ class Device(HeatingSystem):
         self.change(mode="Off", heatSetpoint=self.OFF_TEMPERATURE, thermostatSetpointStatus="PermanentHold")
 
     def _update(self):
+        # headers = {'Authorization': f'Bearer {self.lyric._get_access_token()}'}
+        MAX_TRIES = 3
+        tries = 0
+        device_json = None
         headers = {'Authorization': f'Bearer {self.lyric._get_access_token()}'}
         params = {'apikey': self.lyric.client_id, 'locationId': self.location_id}
-        device_json = self.lyric.api.devices.thermostats(self.device_id).get(headers=headers, params=params)
+        while tries < MAX_TRIES:
+            try:
+                device_json = self.lyric.api.devices.thermostats(self.device_id).get(headers=headers, params=params)
+                break
+            except Exception as e:
+                tries += 1
+                logger.error(f"RETRYING UPDATE")
         return device_json
 
     def __repr__(self):
