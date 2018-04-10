@@ -21,7 +21,7 @@ class House:
         """
         required_temperature = schedule.active_period_minimum_temperature
         required_time = schedule.period_end
-        current_temperature=self.environment_sensor.internal_temperature
+        current_temperature = self.environment_sensor.internal_temperature
 
         warm_up_time_mins = (required_temperature - current_temperature) / self.WARMUP_GRADIENT
         warm_up_time = timedelta(minutes=warm_up_time_mins)
@@ -35,7 +35,7 @@ class House:
         """
         required_temperature = schedule.inactive_period_minimum_temperature
         required_time = schedule.period_end
-        current_temperature=self.environment_sensor.internal_temperature
+        current_temperature = self.environment_sensor.internal_temperature
 
         cool_down_time_mins = (current_temperature - required_temperature) / self.COOLDOWN_GRADIENT
         cool_down_time = timedelta(minutes=cool_down_time_mins)

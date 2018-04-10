@@ -44,8 +44,6 @@ class Schedule:
         else:
             return self.inactive_period_minimum_temperature
 
-
-
     @property
     def period_end(self):
         """
@@ -60,4 +58,3 @@ class Schedule:
             dt = datetime.combine(yyyy_mm_dd, hh_mm) + timedelta(days=1)
 
         return dt
-
