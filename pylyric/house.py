@@ -14,6 +14,8 @@ class House:
     def __init__(self, heating_system: HeatingSystem=None, environment_sensor: EnvironmentSensor=None):
         self.heating_system = heating_system
         self.environment_sensor = environment_sensor
+        self.warm_up_time_mins = None
+        self.cool_down_time_mins = None
 
     def is_time_to_warm_up(self, schedule) -> bool:
         """
@@ -23,8 +25,8 @@ class House:
         required_time = schedule.period_end
         current_temperature = self.environment_sensor.internal_temperature
 
-        warm_up_time_mins = (required_temperature - current_temperature) / self.WARMUP_GRADIENT
-        warm_up_time = timedelta(minutes=warm_up_time_mins)
+        self.warm_up_time_mins = (required_temperature - current_temperature) / self.WARMUP_GRADIENT
+        warm_up_time = timedelta(minutes=self.warm_up_time_mins)
         warm_up_start_time = required_time - warm_up_time
 
         return datetime.now() > warm_up_start_time
@@ -37,8 +39,8 @@ class House:
         required_time = schedule.period_end
         current_temperature = self.environment_sensor.internal_temperature
 
-        cool_down_time_mins = (current_temperature - required_temperature) / self.COOLDOWN_GRADIENT
-        cool_down_time = timedelta(minutes=cool_down_time_mins)
+        self.cool_down_time_mins = (current_temperature - required_temperature) / self.COOLDOWN_GRADIENT
+        cool_down_time = timedelta(minutes=self.cool_down_time_mins)
         cool_down_start_time = required_time - cool_down_time
 
         return datetime.now() > cool_down_start_time

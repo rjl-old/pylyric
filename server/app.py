@@ -114,10 +114,12 @@ def check_schedule(house: House, schedule: Schedule):
     if house.is_time_to_warm_up(schedule):
         status += ", PRE-WARM"
         db.write("controller", pre_warm=True)
+        db.write("controller", warm_up_time=house.warm_up_time_mins)
 
     elif house.is_time_to_cool_down(schedule):
         status += ", COOL-DOWN"
         db.write("controller", cool_down=True)
+        db.write("controller", cool_down_time=house.cool_down_time_mins)
 
     logger.info(status)
     db.write("controller", heating=heating_system.is_on)
