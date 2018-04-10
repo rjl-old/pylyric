@@ -1,9 +1,16 @@
-from pylyric.heating_system import T6
+from pylyric.lyric import Lyric
+from pylyric.heating_system import HeatingSystem, T6
 import pytest
 
+lyric = Lyric()
+device = lyric.devices[0]
 
-def test_initialise(heating_system):
-    assert isinstance(heating_system, T6)
+heating_system: HeatingSystem = T6(device)
+#
+def test_initialise():
+    print(device)
+    print(heating_system)
+    # assert isinstance(heating_system, T6)
 
 
 #
@@ -11,11 +18,11 @@ def test_initialise(heating_system):
 # TODO: Teardown to return system to previous state
 #
 
-@pytest.mark.skip(reason="Changes the heating system state!")
-def test_turn_on(heating_system):
-    heating_system.turn_on()
-
-
-@pytest.mark.skip(reason="Changes the heating system state!")
-def test_turn_off(heating_system):
-    heating_system.turn_off()
+# @pytest.mark.skip(reason="Changes the heating system state!")
+# def test_turn_on(heating_system):
+#     heating_system.turn_on()
+#
+#
+# @pytest.mark.skip(reason="Changes the heating system state!")
+# def test_turn_off(heating_system):
+#     heating_system.turn_off()
