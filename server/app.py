@@ -79,51 +79,57 @@ async def get_last_update(request):
 @async_run_every(seconds=UPDATE_FREQUENCY)
 def check_schedule(house: House, schedule: Schedule):
 
-    current_temperature = house.environment_sensor.internal_temperature
+    try:
 
-    if schedule.is_active_period():
+        current_temperature = house.environment_sensor.internal_temperature
 
-        is_too_cold = current_temperature < schedule.active_period_minimum_temperature
+        if schedule.is_active_period():
 
-        if (not is_too_cold) or house.is_time_to_cool_down(schedule):
-            house.heating_system.turn_off()
-            is_on = False
+            is_too_cold = current_temperature < schedule.active_period_minimum_temperature
 
+            if (not is_too_cold) or house.is_time_to_cool_down(schedule):
+                house.heating_system.turn_off()
+                is_on = False
+
+            else:
+                house.heating_system.turn_on()
+                is_on = True
+
+        else: # is inactive period
+
+            is_too_cold = current_temperature < schedule.inactive_period_minimum_temperature
+
+            if is_too_cold or house.is_time_to_warm_up(schedule):
+                house.heating_system.turn_on()
+                is_on = True
+
+            else:
+                house.heating_system.turn_off()
+                is_on = False
+
+        status = f"T:{round(current_temperature,1)}, M:{round(schedule.minimum_temperature,1)}"
+        if house.heating_system.is_on:
+            status += ", ON"
         else:
-            house.heating_system.turn_on()
-            is_on = True
+            status += ", OFF"
 
-    else: # is inactive period
+        if house.is_time_to_warm_up(schedule):
+            status += ", PRE-WARM"
+            db.write("controller", pre_warm=True)
+            db.write("controller", warm_up_time=house.warm_up_time_mins)
 
-        is_too_cold = current_temperature < schedule.inactive_period_minimum_temperature
+        elif house.is_time_to_cool_down(schedule):
+            status += ", COOL-DOWN"
+            db.write("controller", cool_down=True)
+            db.write("controller", cool_down_time=house.cool_down_time_mins)
 
-        if is_too_cold or house.is_time_to_warm_up(schedule):
-            house.heating_system.turn_on()
-            is_on = True
+        logger.info(status)
+        db.write("controller", heating=heating_system.is_on)
+        db.write("controller", minimum_temperture=schedule.minimum_temperature)
 
-        else:
-            house.heating_system.turn_off()
-            is_on = False
+    except:
 
-    status = f"T:{round(current_temperature,1)}, M:{round(schedule.minimum_temperature,1)}"
-    if house.heating_system.is_on:
-        status += ", ON"
-    else:
-        status += ", OFF"
-
-    if house.is_time_to_warm_up(schedule):
-        status += ", PRE-WARM"
-        db.write("controller", pre_warm=True)
-        db.write("controller", warm_up_time=house.warm_up_time_mins)
-
-    elif house.is_time_to_cool_down(schedule):
-        status += ", COOL-DOWN"
-        db.write("controller", cool_down=True)
-        db.write("controller", cool_down_time=house.cool_down_time_mins)
-
-    logger.info(status)
-    db.write("controller", heating=heating_system.is_on)
-    db.write("controller", minimum_temperture=schedule.minimum_temperature)
+        logger.error("Event loop failed. Skipping")
 
 
 app.add_task(check_schedule(house, schedule))
