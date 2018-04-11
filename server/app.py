@@ -125,7 +125,7 @@ def check_schedule(house: House, schedule: Schedule):
 
         logger.info(status)
         db.write("controller", heating=heating_system.is_on)
-        db.write("controller", minimum_temperture=schedule.minimum_temperature)
+        db.write("controller", minimum_temperature=schedule.minimum_temperature)
 
     except:
 
