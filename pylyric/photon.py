@@ -2,7 +2,7 @@ import dateutil.parser
 import requests
 from requests import Response
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3 import Retry
 
 import server.config as config
 from pylyric.environment_sensor import EnvironmentSensor
