@@ -50,11 +50,13 @@ class Schedule:
         :return: datetime the time the current period ends
         """
         yyyy_mm_dd = date.today()
+
         if self.is_active_period():
             hh_mm = self.active_period_end
             dt = datetime.combine(yyyy_mm_dd, hh_mm)
+
         else:
             hh_mm = self.active_period_start
-            dt = datetime.combine(yyyy_mm_dd, hh_mm) + timedelta(days=1)
+            dt = datetime.combine(yyyy_mm_dd, hh_mm) #+ timedelta(days=1)
 
         return dt
