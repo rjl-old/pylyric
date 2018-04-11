@@ -1,6 +1,19 @@
-from pylyric.lyric import Lyric, Device
+from requests import Response
 
+from pylyric.lyric import Device, Lyric, LyricAPI
+
+api = LyricAPI()
 lyric = Lyric()
+
+
+class TestLyricAPI:
+
+    def test_get_auth_token(self):
+        assert isinstance(api._get_auth_token(), Response)
+
+    def test_get_locations(self):
+        locations = api.get_locations()
+        assert isinstance(locations, Response)
 
 
 class TestLyric:

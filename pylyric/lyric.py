@@ -1,65 +1,85 @@
-import datetime
-import server.config as config
-import tortilla
-import requests
-from requests.auth import HTTPBasicAuth
 from typing import List
 
+import requests
+from requests import Response
+from requests.adapters import HTTPAdapter
+from requests.auth import HTTPBasicAuth
+from requests.packages.urllib3.util.retry import Retry
+
+import server.config as config
 from pylyric.heating_system import Device
+from pylyric.utils import protector
+
+MAX_RETRIES = 3
 
 
 class Lyric:
-    """Represents a Honeywell Lyric API client."""
+    """Class for managing Lyric devices"""
 
-    TOKEN_URL = "https://api.honeywell.com/oauth2/token"
-
-    def __init__(self, config=config):
-
-        self.client_id = config.CLIENT_ID
-        self.client_secret = config.CLIENT_SECRET
-        self.access_token = config.ACCESS_TOKEN
-        self.refresh_token = config.REFRESH_TOKEN
-        self.expiry_date = None
-
-        self.api = tortilla.wrap('https://api.honeywell.com/v2/')
-
+    def __init__(self):
+        self.api = LyricAPI()
         self.devices = self._get_devices()
 
     def _get_devices(self) -> List[Device]:
         devices = []
-        headers = {'Authorization': f'Bearer {self._get_access_token()}'}
-        params = {'apikey': self.client_id}
-        locations = self.api.locations.get(params=params, headers=headers)
+        locations = self.api.get_locations().json()
         for location in locations:
             location_id = location['locationID']
             for device_json in location['devices']:
                 devices.append(Device(json=device_json, location_id=location_id, lyric=self))
         return devices
 
-    def _get_access_token(self) -> str:
-        if self._is_token_expired():
-            self._refresh_token()
-        return self.access_token
 
-    def _is_token_expired(self) -> bool:
-        return True if self.expiry_date is None else self.expiry_date < datetime.datetime.now()
+class LyricAPI:
+    """Represents a Honeywell Lyric API client"""
 
-    def _refresh_token(self):
-        auth = HTTPBasicAuth(self.client_id, self.client_secret)
+    TOKEN_URL = "https://api.honeywell.com/oauth2/token"
+    API_URL = "https://api.honeywell.com/v2/"
 
-        payload = {
-            "grant_type": "refresh_token",
-            "refresh_token": self.refresh_token
-        }
+    def __init__(self):
+        self.client_id = config.CLIENT_ID
+        self.client_secret = config.CLIENT_SECRET
+        self.refresh_token = config.REFRESH_TOKEN
 
-        response = requests.post(self.TOKEN_URL, auth=auth, data=payload)
+    @protector
+    def _get_auth_token(self) -> Response:
+        resp = self.requests_retry_session().post(
+                self.TOKEN_URL,
+                auth=HTTPBasicAuth(self.client_id, self.client_secret),
+                data={
+                    'grant_type': 'refresh_token',
+                    'refresh_token': self.refresh_token
+                }
+        )
+        return resp
 
-        if response.status_code == 200:
-            self.access_token = response.json()['access_token']
-            self.expiry_date = self._date_seconds_from_now(int(response.json()['expires_in']))
-        else:
-            raise RuntimeError(f"Couldn't refresh token: {response.json()}")
+    @protector
+    def get_locations(self) -> Response:
+        token = self._get_auth_token().json()["access_token"]
+        headers = {'Authorization': f'Bearer {token}'}
+        params = {'apikey': self.client_id}
+        return self.requests_retry_session().get(self._url('locations'), headers=headers, params=params)
 
     @staticmethod
-    def _date_seconds_from_now(seconds: int) -> datetime:
-        return datetime.datetime.now() + datetime.timedelta(0, seconds)
+    def requests_retry_session(
+            retries=MAX_RETRIES,
+            backoff_factor=0.3,
+            status_forcelist=(400, 403, 404, 500),
+            session=None
+    ) -> requests.Session:
+        """see: https://www.peterbe.com/plog/best-practice-with-retries-with-requests"""
+        session = session or requests.Session()
+        retry = Retry(
+                total=retries,
+                read=retries,
+                connect=retries,
+                backoff_factor=backoff_factor,
+                status_forcelist=status_forcelist,
+        )
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+        return session
+
+    def _url(self, path):
+        return self.API_URL + path
