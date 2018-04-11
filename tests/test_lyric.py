@@ -2,11 +2,12 @@ from requests import Response
 
 from pylyric.lyric import Device, Lyric, LyricAPI
 
-api = LyricAPI()
+# api = LyricAPI()
 lyric = Lyric()
+device = lyric.devices[0]
 
 
-class TestLyricAPI:
+class xTestLyricAPI:
 
     def test_get_auth_token(self):
         assert isinstance(api._get_auth_token(), Response)
@@ -16,7 +17,7 @@ class TestLyricAPI:
         assert isinstance(locations, Response)
 
 
-class TestLyric:
+class xTestLyric:
 
     def test_devices(self):
         assert isinstance(lyric.devices[0], Device)
@@ -24,7 +25,12 @@ class TestLyric:
 
 class TestDevice:
 
-    def test_device_properties(self):
+    def test_internal_temperature(self):
+        assert isinstance(device.internal_temperature, float)
+        print(device.internal_temperature)
+
+
+    def xtest_device_properties(self):
         device = lyric.devices[0]
         assert isinstance(device.device_id, str)
         assert isinstance(device.name, str)
@@ -34,7 +40,7 @@ class TestDevice:
         assert isinstance(device.outdoor_humidity, int)
         assert isinstance(device.mode, str)
 
-    def test_change(self):
+    def xtest_change(self):
         device = lyric.devices[0]
 
         old_state = device.changeable_values

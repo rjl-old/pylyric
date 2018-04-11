@@ -24,7 +24,6 @@ class Photon(EnvironmentSensor):
         self.functions = None
         self.last_ip_address = None
 
-
         self._parse_device_information()
 
     def _parse_device_information(self):
