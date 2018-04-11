@@ -82,12 +82,18 @@ class Device(HeatingSystem):
         self.lyric.api.devices.thermostats(self.device_id).post(headers=headers, params=params, data=changeable_values)
 
     def turn_on(self):
-        self._on = True
-        self.change(mode="Heat", heatSetpoint=self.ON_TEMPERATURE, thermostatSetpointStatus="PermanentHold")
+        try:
+            self.change(mode="Heat", heatSetpoint=self.ON_TEMPERATURE, thermostatSetpointStatus="PermanentHold")
+            self._on = True
+        except:
+            logger.error(f"DEVICE.turn_on() EXCEPTION")
 
     def turn_off(self):
-        self._on = False
-        self.change(mode="Off", heatSetpoint=self.OFF_TEMPERATURE, thermostatSetpointStatus="PermanentHold")
+        try:
+            self.change(mode="Off", heatSetpoint=self.OFF_TEMPERATURE, thermostatSetpointStatus="PermanentHold")
+            self._on = False
+        except:
+            logger.error(f"DEVICE.turn_off() EXCEPTION")
 
     def _update(self):
         # headers = {'Authorization': f'Bearer {self.lyric._get_access_token()}'}
@@ -102,7 +108,7 @@ class Device(HeatingSystem):
                 break
             except Exception as e:
                 tries += 1
-                logger.error(f"RETRYING UPDATE")
+                logger.warn(f"Failed to update device - retrying")
         return device_json
 
     def __repr__(self):

@@ -23,17 +23,21 @@ class Photon(EnvironmentSensor):
 
     @property
     def internal_temperature(self):
-        MAX_TRIES = 3
-        tries = 0
-        result = None
-        while tries < MAX_TRIES:
-            try:
-                result = self.api.temperature.get(params={'access_token': self.auth_token})
-                result = float(result['result'])
-                break
-            except Exception as e:
-                tries += 1
-                logger.error("Failed to get photon internal temperature")
-        return result
+        try:
+            MAX_TRIES = 3
+            tries = 0
+            result = None
+            while tries < MAX_TRIES:
+                try:
+                    result = self.api.temperature.get(params={'access_token': self.auth_token})
+                    result = float(result['result'])
+                    break
+                except Exception as e:
+                    tries += 1
+                    logger.warn("Failed to get Photon temperature - retrying")
+            return result
+        except:
+            logger.error("PHOTON.internal_temperature EXCEPTION")
+
 
 
