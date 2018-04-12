@@ -11,7 +11,7 @@ from pylyric.photon import Photon
 from pylyric.schedule import Schedule
 from server.tasks import async_run_every, tasks
 
-UPDATE_FREQUENCY = 10  # seconds
+UPDATE_FREQUENCY = 300  # seconds
 PHOTON_DEVICE_ID = "37002b001147343438323536"
 ACTIVE_PERIOD_START = datetime.time(8, 0)
 ACTIVE_PERIOD_END = datetime.time(22, 0)
