@@ -29,7 +29,7 @@ def protector(func):
             return resp
 
         except Exception as x:
-            print(f'{x.__class__.__name__}::honeywellAPI.{func.__name__}() [{x}]')
+            print(f'{x.__class__.__name__}::API.{func.__name__}() [{x}]')
             raise
 
     return retried_func
