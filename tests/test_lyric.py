@@ -6,6 +6,9 @@ api = LyricAPI()
 lyric = Lyric()
 device = lyric.devices[0]
 
+# These will change if physical device is reset
+LOCATION_ID = 199754
+DEVICE_ID = 'LCC-00D02DB6B4A8'
 
 class TestLyricAPI:
 
