@@ -1,16 +1,62 @@
+import json
 from typing import List
 
-import requests
 from requests import Response
-from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth
-from requests.packages.urllib3.util.retry import Retry
 
 import server.config as config
-from pylyric.heating_system import Device
-from pylyric.utils import protector
+from pylyric.api_utils import protector, requests_retry_session
+from pylyric.environment_sensor import EnvironmentSensor
+from pylyric.heating_system import HeatingSystem
 
-MAX_RETRIES = 3
+
+class Device(HeatingSystem, EnvironmentSensor):
+    ON_TEMPERATURE = 25  # degC - arbitrary, just need 'hot'
+    OFF_TEMPERATURE = 15  # degC - arbitrary, just need 'cold'
+
+    def __init__(self, json, location_id, api):
+        self.device_id = json['deviceID']
+        self.name = json['name']
+        self.location_id = int(location_id)
+        self.api = api
+        self._on = None
+
+    # HeatingSystem abstract function definitions
+
+    def turn_on(self):
+        self.api.change_thermostat(
+                location_id=self.location_id,
+                device_id=self.device_id,
+                mode="Heat",
+                heatSetpoint=self.ON_TEMPERATURE,
+                thermostatSetpointStatus="PermanentHold"
+        )
+
+    def turn_off(self):
+        self.api.change_thermostat(
+                location_id=self.location_id,
+                device_id=self.device_id,
+                mode="Off",
+                heatSetpoint=self.OFF_TEMPERATURE,
+                thermostatSetpointStatus="PermanentHold"
+        )
+
+    def is_on(self):
+        pass
+
+    # EnvironmentSensor function definitions
+
+    @property
+    def internal_temperature(self):
+        response = self.api.get_thermostat(location_id=self.location_id, device_id=self.device_id)
+        return float(response.json()['indoorTemperature'])
+
+    # Other methods
+
+    @property
+    def mode(self):
+        response = self.api.get_thermostat(location_id=self.location_id, device_id=self.device_id)
+        return str(response.json()['changeableValues']['mode'])
 
 
 class Lyric:
@@ -26,7 +72,7 @@ class Lyric:
         for location in locations:
             location_id = location['locationID']
             for device_json in location['devices']:
-                devices.append(Device(json=device_json, location_id=location_id, lyric=self))
+                devices.append(Device(json=device_json, location_id=location_id, api=self.api))
         return devices
 
 
