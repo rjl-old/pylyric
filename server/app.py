@@ -51,7 +51,7 @@ def check_schedule(house: House, schedule: Schedule):
 
             is_too_warm = current_temperature > schedule.active_period_minimum_temperature
 
-            status = f"ACTIVE,   T:{round(current_temperature,1)}, M:{round(schedule.minimum_temperature,1)}"
+            status = f"ACTIVE, T:{round(current_temperature,1)}, M:{round(schedule.minimum_temperature,1)}"
 
             if is_too_warm or house.is_time_to_cool_down(schedule):
                 house.heating_system.turn_off()
@@ -60,7 +60,7 @@ def check_schedule(house: House, schedule: Schedule):
                 db.write("controller",
                          heating=False,
                          cool_down=house.is_time_to_cool_down(schedule),
-                         cool_down_time=house.cool_down_time_mins if house.is_time_to_cool_down() else 0,
+                         cool_down_time=house.cool_down_time_mins if house.is_time_to_cool_down(schedule) else 0,
                          warm_up=False,
                          warm_up_time=0)
             else:
@@ -87,7 +87,7 @@ def check_schedule(house: House, schedule: Schedule):
                          cool_down=False,
                          cool_down_time=0,
                          warm_up=house.is_time_to_warm_up(schedule),
-                         warm_up_time=house.warm_up_time_mins if house.is_time_to_warm_up() else 0)
+                         warm_up_time=house.warm_up_time_mins if house.is_time_to_warm_up(schedule) else 0)
             else:
                 house.heating_system.turn_off()
                 status += ", OFF"

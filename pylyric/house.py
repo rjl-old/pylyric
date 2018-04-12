@@ -27,7 +27,7 @@ class House:
 
         # print(required_temperature, required_time)
 
-        self.warm_up_time_mins = (required_temperature - current_temperature) / self.WARMUP_GRADIENT
+        self.warm_up_time_mins = int((required_temperature - current_temperature) / self.WARMUP_GRADIENT)
         warm_up_time = timedelta(minutes=self.warm_up_time_mins)
         warm_up_start_time = required_time - warm_up_time
 
@@ -43,7 +43,7 @@ class House:
         required_time = schedule.period_end
         current_temperature = self.environment_sensor.internal_temperature
 
-        self.cool_down_time_mins = (current_temperature - required_temperature) / self.COOLDOWN_GRADIENT
+        self.cool_down_time_mins = int((current_temperature - required_temperature) / self.COOLDOWN_GRADIENT)
         cool_down_time = timedelta(minutes=self.cool_down_time_mins)
         cool_down_start_time = required_time - cool_down_time
 
