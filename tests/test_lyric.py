@@ -21,7 +21,13 @@ class TestLyricAPI:
         assert set(keys).issubset(response_keys)
 
     def test_get_thermostat(self):
-        pass
+        keys = ['indoorTemperature', 'outdoorTemperature', 'displayedOutdoorHumidity']
+        thermostat = api.get_thermostat(location_id=LOCATION_ID, device_id=DEVICE_ID)
+        assert isinstance(thermostat, Response)
+
+        response_keys = list(thermostat.json().keys())
+        assert set(keys).issubset(response_keys)
+
 
 
 class xTestLyric:
