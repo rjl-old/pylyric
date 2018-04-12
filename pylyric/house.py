@@ -6,7 +6,7 @@ from pylyric.heating_system import HeatingSystem
 
 class House:
     """
-    Represents a house with a heating system and an environemnt sensor
+    Represents a house with a heating system and an environment sensor
     """
     WARMUP_GRADIENT = 0.001637426900584798  # degC per minute
     COOLDOWN_GRADIENT = 0.001754760943355017  # degC per minute

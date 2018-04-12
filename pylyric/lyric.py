@@ -41,8 +41,11 @@ class Device(HeatingSystem, EnvironmentSensor):
                 thermostatSetpointStatus="PermanentHold"
         )
 
-    def is_on(self):
-        pass
+    @property
+    def is_on(self) -> bool:
+        response = self.api.get_thermostat(location_id=self.location_id, device_id=self.device_id)
+        string = response.json()['operationStatus']['mode']
+        return True if string == 'Heat' else False
 
     # EnvironmentSensor function definitions
 
@@ -58,11 +61,7 @@ class Device(HeatingSystem, EnvironmentSensor):
         response = self.api.get_thermostat(location_id=self.location_id, device_id=self.device_id)
         return str(response.json()['changeableValues']['mode'])
 
-    @property
-    def operation_status(self):
-        response = self.api.get_thermostat(location_id=self.location_id, device_id=self.device_id)
-        string = response.json()['operationStatus']['mode']
-        return 'ON' if string == 'Heat' else 'OFF'
+
 
 
 class Lyric:
