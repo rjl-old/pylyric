@@ -72,5 +72,29 @@ class LyricAPI:
         }
         return requests_retry_session().get(url, headers=headers, params=params)
 
+    @protector
+    def change_thermostat(self, location_id, device_id, **kwargs) -> Response:
+        # get the current state
+        result = self.get_thermostat(location_id=location_id, device_id=device_id).json()
+        changeable_values = result['changeableValues']
+
+        # update dictionary with new parameters
+        for k, v in kwargs.items():
+            if k in changeable_values:
+                changeable_values[k] = v
+            else:
+                raise ValueError("Unknown parameter: '{}'".format(k))
+
+        # update device
+        url = self._url(f'devices/thermostats/{device_id}')
+        token = self._get_auth_token().json()["access_token"]
+        headers = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+        params = {
+            'apikey': self.client_id,
+            'locationId': location_id
+        }
+        data = json.dumps(changeable_values)
+        return requests_retry_session().post(url, headers=headers, params=params, data=data)
+
     def _url(self, path):
         return self.API_URL + path

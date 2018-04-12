@@ -25,12 +25,20 @@ class TestLyricAPI:
 
     def test_get_thermostat(self):
         keys = ['indoorTemperature', 'outdoorTemperature', 'displayedOutdoorHumidity']
-        thermostat = api.get_thermostat(location_id=LOCATION_ID, device_id=DEVICE_ID)
         assert isinstance(thermostat, Response)
 
         response_keys = list(thermostat.json().keys())
         assert set(keys).issubset(response_keys)
 
+    def test_change_thermostat(self):
+        old_mode = get_mode()
+        new_mode = "Heat" if old_mode == "Off" else "Off"
+        api.change_thermostat(location_id=LOCATION_ID, device_id=DEVICE_ID, mode=new_mode)
+        changed_mode = get_mode()
+        assert changed_mode == new_mode
+
+        # change it back
+        api.change_thermostat(location_id=LOCATION_ID, device_id=DEVICE_ID, mode=old_mode)
 
 
 class xTestLyric:
