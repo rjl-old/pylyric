@@ -2,8 +2,8 @@ import dateutil.parser
 from requests import Response
 
 import server.config as config
-from pylyric.environment_sensor import EnvironmentSensor
 from pylyric.api_utils import protector, requests_retry_session
+from pylyric.environment_sensor import EnvironmentSensor
 
 MAX_RETRIES = 3
 
