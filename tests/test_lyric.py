@@ -3,7 +3,7 @@ import pytest
 
 from pylyric.lyric import Device, Lyric, LyricAPI
 
-# These will change if physical device is reset
+# These may change if physical device is reset
 LOCATION_ID = 199754
 DEVICE_ID = 'LCC-00D02DB6B4A8'
 
@@ -11,12 +11,6 @@ api = LyricAPI()
 lyric = Lyric()
 device = lyric.devices[0]
 thermostat = api.get_thermostat(location_id=LOCATION_ID, device_id=DEVICE_ID)
-
-
-# def get_mode():
-#     thermostat = api.get_thermostat(location_id=LOCATION_ID, device_id=DEVICE_ID)
-#     changeable_values = thermostat.json()['changeableValues']
-#     return changeable_values['mode']
 
 
 class TestLyricAPI:
