@@ -2,19 +2,26 @@ from requests import Response
 
 from pylyric.lyric import Device, Lyric, LyricAPI
 
-# api = LyricAPI()
+api = LyricAPI()
 lyric = Lyric()
 device = lyric.devices[0]
 
 
-class xTestLyricAPI:
+class TestLyricAPI:
 
     def test_get_auth_token(self):
         assert isinstance(api._get_auth_token(), Response)
 
     def test_get_locations(self):
+        keys = ['locationID', 'name', 'devices']
         locations = api.get_locations()
         assert isinstance(locations, Response)
+
+        response_keys = list(locations.json()[0].keys())
+        assert set(keys).issubset(response_keys)
+
+    def test_get_thermostat(self):
+        pass
 
 
 class xTestLyric:
