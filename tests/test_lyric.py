@@ -60,6 +60,9 @@ class TestDevice:
     def test_mode(self):
         assert isinstance(device.mode, str)
 
+    def test_operating_status(self):
+        assert(device.operation_status in ['ON', 'OFF'])
+
     @pytest.mark.skip(reason="This physically turns the heating on. Supervise the test.")
     def test_turn_on(self):
         device.turn_on()
