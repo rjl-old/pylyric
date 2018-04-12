@@ -1,13 +1,10 @@
-# from datetime import datetime
-from datetime import datetime, date, time, timedelta
+from datetime import date, datetime, time
 
-
-# TODO: Need to make this time, not datetime
 
 class Schedule:
     """Represents a heating schedule.
 
-       A schedule is an active and an inactive period and temperature.
+       A schedule is an active, an inactive period, and temperature.
     """
 
     def __init__(self,
@@ -29,20 +26,14 @@ class Schedule:
 
         now = datetime.now()
         hh_mm = time(now.hour, now.minute)
-        if self.active_period_start <= hh_mm <= self.active_period_end:
-            return True
-        else:
-            return False
+        return True if self.active_period_start <= hh_mm <= self.active_period_end else False
 
     @property
     def minimum_temperature(self):
         """
         :return: float The minimum temperature corresponding to the current period
         """
-        if self.is_active_period():
-            return self.active_period_minimum_temperature
-        else:
-            return self.inactive_period_minimum_temperature
+        return self.active_period_minimum_temperature if self.is_active_period() else self.inactive_period_minimum_temperature
 
     @property
     def period_end(self):
@@ -57,6 +48,9 @@ class Schedule:
 
         else:
             hh_mm = self.active_period_start
-            dt = datetime.combine(yyyy_mm_dd, hh_mm) #+ timedelta(days=1)
+            dt = datetime.combine(yyyy_mm_dd, hh_mm)  # + timedelta(days=1)
 
         return dt
+
+    def __repr__(self):
+        return f"<SCHEDULE> ON:{self.active_period_start} OFF:{self.active_period_end} ACTIVE:{self.active_period_minimum_temperature} INACTIVE:{self.inactive_period_minimum_temperature}"
