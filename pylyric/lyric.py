@@ -62,8 +62,6 @@ class Device(HeatingSystem, EnvironmentSensor):
         return str(response.json()['changeableValues']['mode'])
 
 
-
-
 class Lyric:
     """Class for managing Lyric devices"""
 

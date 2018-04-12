@@ -13,8 +13,8 @@ from server.tasks import async_run_every, tasks
 
 UPDATE_FREQUENCY = 300  # seconds
 PHOTON_DEVICE_ID = "37002b001147343438323536"
-ACTIVE_PERIOD_START = datetime.time(8, 0)
-ACTIVE_PERIOD_END = datetime.time(22, 0)
+ACTIVE_PERIOD_START = datetime.time(7, 0)
+ACTIVE_PERIOD_END = datetime.time(21, 0)
 ACTIVE_PERIOD_MINIMUM_TEMPERATURE = 20.0
 INACTIVE_PERIOD_MINIMUM_TEMPERATURE = 18.0
 
