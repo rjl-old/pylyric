@@ -55,10 +55,11 @@ class LyricAPI:
 
     @protector
     def get_locations(self) -> Response:
+        url = self._url('locations')
         token = self._get_auth_token().json()["access_token"]
         headers = {'Authorization': f'Bearer {token}'}
         params = {'apikey': self.client_id}
-        return requests_retry_session().get(self._url('locations'), headers=headers, params=params)
+        return requests_retry_session().get(url, headers=headers, params=params)
 
     @protector
     def get_thermostat(self, location_id, device_id) -> Response:
