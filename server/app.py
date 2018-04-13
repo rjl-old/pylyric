@@ -14,8 +14,8 @@ from server.tasks import async_run_every, tasks
 
 # If LIVE is false, don't write to the database, or change the state of the heating system
 LIVE = False
+UPDATE_FREQUENCY = 10  # seconds
 
-UPDATE_FREQUENCY = 300  # seconds
 PHOTON_DEVICE_ID = "37002b001147343438323536"
 ACTIVE_PERIOD_START = datetime.time(7, 0)
 ACTIVE_PERIOD_END = datetime.time(21, 0)
@@ -61,7 +61,10 @@ def check_schedule(house: House, schedule: Schedule):
             status = f"ACTIVE, T:{round(current_temperature,1)}, M:{round(schedule.minimum_temperature,1)}"
 
             if is_too_warm or house.is_time_to_cool_down(schedule):
-                house.heating_system.turn_off()
+
+                if LIVE:
+                    house.heating_system.turn_off()
+
                 status += ", OFF"
                 status += " (COOL-DOWN)" if house.is_time_to_cool_down(schedule) else ""
                 db.write("controller",
@@ -71,7 +74,9 @@ def check_schedule(house: House, schedule: Schedule):
                          warm_up=False,
                          warm_up_time=0)
             else:
-                house.heating_system.turn_on()
+                if LIVE:
+                    house.heating_system.turn_on()
+
                 status += ", ON"
                 db.write("controller",
                          heating=True,
@@ -86,7 +91,9 @@ def check_schedule(house: House, schedule: Schedule):
             status = f"INACTIVE, T:{round(current_temperature,1)}, M:{round(schedule.minimum_temperature,1)}"
 
             if is_too_cold or house.is_time_to_warm_up(schedule):
-                house.heating_system.turn_on()
+                if LIVE:
+                    house.heating_system.turn_on()
+
                 status += ", ON"
                 status += " (WARM-UP)" if house.is_time_to_warm_up(schedule) else ""
                 db.write("controller",
@@ -96,7 +103,9 @@ def check_schedule(house: House, schedule: Schedule):
                          warm_up=house.is_time_to_warm_up(schedule),
                          warm_up_time=house.warm_up_time_mins if house.is_time_to_warm_up(schedule) else 0)
             else:
-                house.heating_system.turn_off()
+                if LIVE:
+                    house.heating_system.turn_off()
+
                 status += ", OFF"
                 db.write("controller",
                          heating=False,
@@ -108,9 +117,9 @@ def check_schedule(house: House, schedule: Schedule):
         db.write("controller", minimum_temperature=schedule.minimum_temperature)
         logger.info(status)
 
-    except:
+    except Exception as e:
 
-        logger.error("Event loop failed. Skipping")
+        logger.error(f"Event loop failed: {e}")
 
 app.add_task(check_schedule(house, schedule))
 
