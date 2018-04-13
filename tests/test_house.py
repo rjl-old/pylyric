@@ -1,38 +1,98 @@
-from datetime import datetime, time
+from datetime import datetime, timedelta
 from unittest import mock
 
-from pylyric.environment_sensor import EnvironmentSensor
 from pylyric.house import House
-from pylyric.photon import Photon
-from pylyric.schedule import Schedule
 
-# PHOTON_DEVICE_ID = "37002b001147343438323536"
-# photon = Photon(device_id=PHOTON_DEVICE_ID)
-mock_photon = mock.Mock()
-mock_photon.internal_temperature.return_value = 15
-environment_sensor: EnvironmentSensor = mock_photon
-house = House(environment_sensor=environment_sensor)
+environment_sensor = mock.Mock()
+heating_system = mock.Mock()
+schedule = mock.Mock()
 
-def test_mock_object():
-    mock_photon = mock.Mock()
-    environment_sensor: EnvironmentSensor = mock_photon
-    house = House(environment_sensor=environment_sensor)
-    mock_photon.internal_temperature.assert_called_with()
+house = House(
+        environment_sensor=environment_sensor,
+        heating_system=heating_system,
+        schedule=schedule)
 
 
-def xtest_is_time_to_warm_up():
-    now = datetime.now()
-    schedule = Schedule(
-            active_period_start=time(now.hour, now.minute, now.second),
-            active_period_end=time(now.hour + 1, now.minute, now.second),
-            active_period_minimum_temperature=20.0,
-            inactive_period_minimum_temperature=18.0
-    )
-    print(schedule)
-    print(house.environment_sensor.internal_temperature)
+# NOTE: These tests depend on the class's thermal gradient settings
 
-    # m = mock.Mock()
-    # m.current_temperature.return_value = 15
+def test_is_time_to_warm_up():
+
+    # It's cooler than the required temperature -
+
+    REQUIRED_TEMP = 22.0
+    CURRENT_TEMP = 19.0
+
+    required_mins = int((REQUIRED_TEMP - CURRENT_TEMP) / House().WARMUP_GRADIENT)
+    schedule.active_period_minimum_temperature = REQUIRED_TEMP
+    environment_sensor.internal_temperature = CURRENT_TEMP
+
+    schedule.period_end = datetime.now() + timedelta(minutes=required_mins - 10)
+    assert house.is_time_to_warm_up
+
+    schedule.period_end = datetime.now() + timedelta(minutes=required_mins + 10)
+    assert not house.is_time_to_warm_up
+
+    # It's warmer than the required temperature - should always fail
+
+    REQUIRED_TEMP = 19.0
+    CURRENT_TEMP = 22.0
+
+    required_mins = int((REQUIRED_TEMP - CURRENT_TEMP) / House().WARMUP_GRADIENT)
+    schedule.active_period_minimum_temperature = REQUIRED_TEMP
+    environment_sensor.internal_temperature = CURRENT_TEMP
+
+    schedule.period_end = datetime.now() + timedelta(minutes=required_mins - 10)
+    assert not house.is_time_to_warm_up
+
+    schedule.period_end = datetime.now() + timedelta(minutes=required_mins + 10)
+    assert not house.is_time_to_warm_up
+
+
+def test_is_time_to_cool_down():
+
+    # It's warmer than the required temperature
+
+    REQUIRED_TEMP = 19.0
+    CURRENT_TEMP = 22.0
+
+    required_mins = int((CURRENT_TEMP - REQUIRED_TEMP) / House().COOLDOWN_GRADIENT)
+    schedule.inactive_period_minimum_temperature = REQUIRED_TEMP
+    environment_sensor.internal_temperature = CURRENT_TEMP
+
+    schedule.period_end = datetime.now() + timedelta(minutes=required_mins - 10)
+    assert house.is_time_to_cool_down
+
+    schedule.period_end = datetime.now() + timedelta(minutes=required_mins + 10)
+    assert not house.is_time_to_cool_down
+
+    # It's cooler than the required temperature - should always fail
+
+    REQUIRED_TEMP = 22.0
+    CURRENT_TEMP = 19.0
+
+    required_mins = int((CURRENT_TEMP - REQUIRED_TEMP) / House().COOLDOWN_GRADIENT)
+    schedule.inactive_period_minimum_temperature = REQUIRED_TEMP
+    environment_sensor.internal_temperature = CURRENT_TEMP
+
+    schedule.period_end = datetime.now() + timedelta(minutes=required_mins - 10)
+    assert not house.is_time_to_cool_down
+
+    schedule.period_end = datetime.now() + timedelta(minutes=required_mins + 10)
+    assert not house.is_time_to_cool_down
+
+# def xtest_is_time_to_warm_up():
+#     now = datetime.now()
+#     schedule = Schedule(
+#             active_period_start=time(now.hour, now.minute, now.second),
+#             active_period_end=time(now.hour + 1, now.minute, now.second),
+#             active_period_minimum_temperature=20.0,
+#             inactive_period_minimum_temperature=18.0
+#     )
+#     print(schedule)
+#     print(house.environment_sensor.internal_temperature)
+
+# m = mock.Mock()
+# m.current_temperature.return_value = 15
 
 
 # @pytest.mark.parametrize(
