@@ -17,6 +17,7 @@ ACTIVE_PERIOD_START = datetime.time(7, 0)
 ACTIVE_PERIOD_END = datetime.time(21, 0)
 ACTIVE_PERIOD_MINIMUM_TEMPERATURE = 20.0
 INACTIVE_PERIOD_MINIMUM_TEMPERATURE = 18.0
+INFLUX_DATABASE_NAME = "sensordata"
 
 schedule = Schedule(
         active_period_start=ACTIVE_PERIOD_START,
@@ -27,7 +28,7 @@ schedule = Schedule(
 
 app = Sanic()
 
-db = Influx(db_name="KW-HEATING")
+db = Influx(db_name=INFLUX_DATABASE_NAME)
 
 photon = Photon(device_id=PHOTON_DEVICE_ID)
 device = Lyric().devices[0]
