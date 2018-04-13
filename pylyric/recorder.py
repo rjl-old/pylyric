@@ -15,4 +15,5 @@ class Recorder:
                 cool_down_state,
 
     ):
+        pass
 
