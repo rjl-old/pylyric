@@ -8,8 +8,12 @@ from pylyric.house import House
 from pylyric.influx import Influx
 from pylyric.lyric import Lyric
 from pylyric.photon import Photon
+from pylyric.recorder import Recorder
 from pylyric.schedule import Schedule
 from server.tasks import async_run_every, tasks
+
+# If LIVE is false, don't write to the database, or change the state of the heating system
+LIVE = False
 
 UPDATE_FREQUENCY = 300  # seconds
 PHOTON_DEVICE_ID = "37002b001147343438323536"
@@ -17,7 +21,7 @@ ACTIVE_PERIOD_START = datetime.time(7, 0)
 ACTIVE_PERIOD_END = datetime.time(21, 0)
 ACTIVE_PERIOD_MINIMUM_TEMPERATURE = 20.0
 INACTIVE_PERIOD_MINIMUM_TEMPERATURE = 18.0
-INFLUX_DATABASE_NAME = "sensordata"
+INFLUX_DATABASE_NAME = "test"
 
 schedule = Schedule(
         active_period_start=ACTIVE_PERIOD_START,
@@ -35,6 +39,8 @@ device = Lyric().devices[0]
 environment_sensor: EnvironmentSensor = photon
 heating_system: HeatingSystem = device
 house = House(environment_sensor=environment_sensor, heating_system=heating_system)
+
+# recorder = Recorder(database=db, measurement_name='controller', logger=logger, live=LIVE)
 
 
 @app.route('/')
