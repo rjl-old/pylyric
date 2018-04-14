@@ -28,34 +28,54 @@ schedule.cool_down_start = test_date + datetime.timedelta(hours=16)
 schedule.inactive_period_start = test_date + datetime.timedelta(hours=22)
 
 
-class TestMode:
+class TestModeMock:
 
+    # Early Inactive period
     @freeze_time("Apr 13th, 2018 01:00 ")
     def test_inactive_mode(self):
         assert controller.mode == "INACTIVE"
 
+    # Warmup period, warmup disabled
     @freeze_time("Apr 13th, 2018 06:00")
-    def test_warmup_mode(self):
+    def test_warmup_mode_disabled(self):
+        controller.warm_up_enabled = False
+        assert controller.mode == "INACTIVE"
+
+    # Warmup period, warmup enabled
+    @freeze_time("Apr 13th, 2018 06:00")
+    def test_warmup_mode_enable(self):
+        controller.warm_up_enabled = True
         assert controller.mode == "WARMUP"
 
-    @freeze_time("Apr 13th, 2018 12:00")
+    # Active period
+    @freeze_time("Apr 13th, 2018 12:00")  # Inactivee
     def test_warmup_mode(self):
         assert controller.mode == "ACTIVE"
 
+    # Active period, cooldown disabled
     @freeze_time("Apr 13th, 2018 18:00")
     def test_warmup_mode(self):
+        controller.cool_down_enabled = False
+        assert controller.mode == "ACTIVE"
+
+    # Active period, cooldown enabled
+    @freeze_time("Apr 13th, 2018 18:00")
+    def test_warmup_mode(self):
+        controller.cool_down_enabled = False
         assert controller.mode == "COOLDOWN"
 
+    # Late Inactive period
     @freeze_time("Apr 13th, 2018 23:00")
     def test_warmup_mode(self):
         assert controller.mode == "INACTIVE"
 
-class TestIsTooCold:
+
+class TestIsTooColdMock:
 
     # controller.warm_up and controller.cool_down are True
 
     # GIVEN a controller
-    # WHEN it's in the the INACTIVE mode
+    # WHEN it's in the the INACTIVE period
     # AND the internal temperature is less than the inactive hold temperature
     # THEN it is too cold
 
@@ -70,7 +90,7 @@ class TestIsTooCold:
         assert controller.is_too_cold == False
 
     # GIVEN a controller
-    # WHEN it's in the the WARMUP mode
+    # WHEN it's in the the WARMUP period
     # AND .warm_up is True
     # AND the internal temperature is less than the active hold temperature
     # THEN it is too cold
@@ -157,4 +177,98 @@ class TestIsTooCold:
         assert controller.is_too_cold == False
 
 
+class TestStatus:
 
+    # Early Inactive period,
+    #
+    # too cold
+
+    @freeze_time("Apr 13th, 2018 01:00 ")
+    def test_inactive_too_cold(self):
+        house.environment_sensor.internal_temperature = schedule.inactive_temperature - 1
+        assert controller.status == 'ON (INACTIVE) 18.0 -> 19.0'
+
+    # Early Inactive period,
+    #
+    # not too cold
+
+    @freeze_time("Apr 13th, 2018 01:00 ")
+    def test_inactive_not_too_cold(self):
+        house.environment_sensor.internal_temperature = schedule.inactive_temperature + 1
+        assert controller.status == 'OFF (INACTIVE) 20.0 -> 19.0'
+
+    # Warm-up period, warm_up disabled
+    #
+    # too cold
+
+    @freeze_time("Apr 13th, 2018 06:00")
+    def test_warmup_disabled_too_cold(self):
+        house.environment_sensor.internal_temperature = schedule.active_temperature - 1
+        controller.warm_up_enabled = False
+        assert controller.status == 'OFF (INACTIVE) 20.0 -> 19.0'
+
+    # Warm-up period, warm_up enabled,
+    #
+    # too cold
+
+    @freeze_time("Apr 13th, 2018 06:00")
+    def test_warmup_enabled_too_cold(self):
+        house.environment_sensor.internal_temperature = schedule.active_temperature - 1
+        controller.warm_up_enabled = True
+        assert controller.status == 'ON (WARMUP) 20.0 -> 21.0'
+
+    # Active period
+    #
+    # too cold
+
+    @freeze_time("Apr 13th, 2018 12:00")
+    def test_active_too_cold(self):
+        house.environment_sensor.internal_temperature = schedule.active_temperature - 1
+        assert controller.status == 'ON (ACTIVE) 20.0 -> 21.0'
+
+    # Active period
+    #
+    # not too cold
+
+    @freeze_time("Apr 13th, 2018 12:00")
+    def test_active_not_too_cold(self):
+        house.environment_sensor.internal_temperature = schedule.active_temperature + 1
+        assert controller.status == 'OFF (ACTIVE) 22.0 -> 21.0'
+
+    # Cool-down period, cool-down enabled,
+    #
+    # too cold
+
+    @freeze_time("Apr 13th, 2018 18:00")
+    def test_cooldown_enabled_too_cold(self):
+        house.environment_sensor.internal_temperature = schedule.active_temperature - 1
+        controller.cool_down_enabled = True
+        assert controller.status == 'OFF (COOLDOWN) 20.0 -> 19.0'
+
+    # Cool-down period, cool-down enabled,
+    #
+    # not too cold
+
+    @freeze_time("Apr 13th, 2018 18:00")
+    def test_cooldown_disabled_not_too_cold(self):
+        house.environment_sensor.internal_temperature = schedule.active_temperature + 1
+        controller.cool_down_enabled = False
+        assert controller.status == 'OFF (ACTIVE) 22.0 -> 21.0'
+
+    # Late inactive period
+    #
+    # too cold
+
+    @freeze_time("Apr 13th, 2018 23:00")
+    def test_cooldown_enabled_too_cold(self):
+        house.environment_sensor.internal_temperature = schedule.inactive_temperature - 1
+        assert controller.status == 'ON (INACTIVE) 18.0 -> 19.0'
+
+    # Late inactive period
+    #
+    # not too cold
+
+    @freeze_time("Apr 13th, 2018 23:00")
+    def test_cooldown_disabled_not_too_cold(self):
+        house.environment_sensor.internal_temperature = schedule.inactive_temperature + 1
+        assert controller.status == 'OFF (INACTIVE) 20.0 -> 19.0'
