@@ -10,12 +10,15 @@ class Controller:
         self.warm_up_enabled = warm_up_enabled
         self.cool_down_enabled = cool_down_enabled
 
+    def set_heating(self):
+        if self.house.heating_system.is_active:
+            if self.status == 'ON':
+                self.house.heating_system.turn_on()
+            else:
+                self.house.heating_system.turn_off()
+
     @property
     def mode(self) -> str:
-        print('--')
-        print(self.schedule.cool_down_start)
-        print(self.schedule.inactive_period_start)
-
         if datetime.datetime.now() <= self.schedule.warm_up_start:
             return "INACTIVE"
 
