@@ -15,7 +15,7 @@ from server.tasks import async_run_every, tasks
 
 app = Sanic()
 
-UPDATE_FREQUENCY = 10  # seconds
+UPDATE_FREQUENCY = 5 * 60  # seconds
 
 ACTIVE_TEMPERATURE = 21.0
 INACTIVE_TEMPERATURE = 19.0
@@ -50,7 +50,7 @@ async def index(request):
 
 
 @async_run_every(seconds=UPDATE_FREQUENCY)
-def check_schedule(house: House, schedule: Schedule):
+def check_schedule():
     try:
         controller.set_heating()
         logger.info(controller.status)
@@ -61,7 +61,7 @@ def check_schedule(house: House, schedule: Schedule):
         logger.error(f"Event loop failed: {e}")
 
 
-app.add_task(check_schedule(house, schedule))
+app.add_task(check_schedule())
 
 for task in tasks:
     app.add_task(task())
