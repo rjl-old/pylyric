@@ -1,4 +1,4 @@
-from datetime import date, datetime, time
+from datetime import date, datetime, timedelta
 
 
 class Schedule:
@@ -8,49 +8,49 @@ class Schedule:
     """
 
     def __init__(self,
+                 active_temperature=None,
+                 inactive_temperature=None,
                  active_period_start=None,
-                 active_period_end=None,
-                 active_period_minimum_temperature=None,
-                 inactive_period_minimum_temperature=None
+                 inactive_period_start=None,
                  ):
 
+        self.active_temperature = active_temperature
+        self.inactive_temperature = inactive_temperature
         self.active_period_start = active_period_start
-        self.active_period_end = active_period_end
-        self.active_period_minimum_temperature = active_period_minimum_temperature
-        self.inactive_period_minimum_temperature = inactive_period_minimum_temperature
-
-    def is_active_period(self):
-        """
-        :return: True if now() is in the active period
-        """
-
-        now = datetime.now()
-        hh_mm = time(now.hour, now.minute)
-        return True if self.active_period_start <= hh_mm <= self.active_period_end else False
+        self.inactive_period_start = inactive_period_start
 
     @property
-    def minimum_temperature(self):
-        """
-        :return: float The minimum temperature corresponding to the current period
-        """
-        return self.active_period_minimum_temperature if self.is_active_period() else self.inactive_period_minimum_temperature
-
-    @property
-    def period_end(self):
-        """
-        :return: datetime the time the current period ends
-        """
+    def active_period_start(self):
         yyyy_mm_dd = date.today()
+        hh_mm = self._active_period_start
+        dt = datetime.combine(yyyy_mm_dd, hh_mm)
 
-        if self.is_active_period():
-            hh_mm = self.active_period_end
-            dt = datetime.combine(yyyy_mm_dd, hh_mm)
-
+        if dt > datetime.now():
+            return dt
         else:
-            hh_mm = self.active_period_start
-            dt = datetime.combine(yyyy_mm_dd, hh_mm)  # + timedelta(days=1)
+            return dt + timedelta(days=1)
 
-        return dt
+    @active_period_start.setter
+    def active_period_start(self, value):
+        self._active_period_start = value
 
-    def __repr__(self):
-        return f"<SCHEDULE> ON:{self.active_period_start} OFF:{self.active_period_end} ACTIVE:{self.active_period_minimum_temperature} INACTIVE:{self.inactive_period_minimum_temperature}"
+    @property
+    def inactive_period_start(self):
+        yyyy_mm_dd = date.today()
+        hh_mm_inactive = self._inactive_period_start
+        hh_mm_active = self._active_period_start
+
+        dt_inactive = datetime.combine(yyyy_mm_dd, hh_mm_inactive)
+        dt_active = datetime.combine(yyyy_mm_dd, hh_mm_active)
+
+        if dt_inactive > datetime.now():
+            return dt_inactive
+        else:
+            return dt_active + timedelta(days=1)
+
+    @inactive_period_start.setter
+    def inactive_period_start(self, value):
+        self._inactive_period_start = value
+    #
+    # def __repr__(self):
+    #     return f"<SCHEDULE> ON:{self.active_period_start} OFF:{self.active_period_end} ACTIVE:{self.active_period_minimum_temperature} INACTIVE:{self.inactive_period_minimum_temperature}"

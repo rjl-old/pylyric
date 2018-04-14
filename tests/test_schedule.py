@@ -1,48 +1,52 @@
+import datetime
+
+from freezegun import freeze_time
+from dateutil.parser import *
+
 from pylyric.schedule import Schedule
-from datetime import datetime, time, date
+
+ACTIVE_TEMPERATURE = 21.0
+INACTIVE_TEMPERATURE = 19.0
+ACTIVE_PERIOD_START = parse("07:00").time()
+INACTIVE_PERIOD_START = parse("21:00").time()
+
+schedule = Schedule(
+        active_temperature=ACTIVE_TEMPERATURE,
+        inactive_temperature=INACTIVE_TEMPERATURE,
+        active_period_start=ACTIVE_PERIOD_START,
+        inactive_period_start=INACTIVE_PERIOD_START,
+)
 
 
-def make_schedule(start_hour):
-    """Utility for building a schedule for testing. Makes sure that now() is an active or inactive period
-    """
-    return Schedule(
-            active_period_start=time(start_hour, 0),
-            active_period_end=time(start_hour + 1, 0),
-            active_period_minimum_temperature=20.0,
-            inactive_period_minimum_temperature=18.0
-    )
+class TestActivePeriodStart:
+    @freeze_time("Apr 13th, 2018 01:00 ")
+    def test_active_period_start_before(self):
+        expected_date = parse("Apr 13th, 2018 07:00:00")
+        assert schedule.active_period_start == expected_date
+
+    @freeze_time("Apr 13th, 2018 12:00 ")
+    def test_active_period_start_during(self):
+        expected_date = parse("Apr 14th, 2018 07:00:00")
+        assert schedule.active_period_start == expected_date
+
+    @freeze_time("Apr 13th, 2018 23:00 ")
+    def test_active_period_start_after(self):
+        expected_date = parse("Apr 14th, 2018 07:00:00")
+        assert schedule.active_period_start == expected_date
 
 
-def test_is_active_period():
-    now = datetime.now()
-    schedule = make_schedule(start_hour=now.hour)
-    assert schedule.is_active_period() == True
-    assert schedule.minimum_temperature == 20.0
+class TestInactivePeriodStart:
+    @freeze_time("Apr 13th, 2018 01:00")
+    def test_inactive_period_start_after(self):
+        expected_date = parse("Apr 13th, 2018 21:00:00")
+        assert schedule.inactive_period_start == expected_date
 
+    @freeze_time("Apr 13th, 2018 12:00")
+    def test_inactive_period_start_before(self):
+        expected_date = parse("Apr 13th, 2018 21:00:00")
+        assert schedule.inactive_period_start == expected_date
 
-def test_active_period_end():
-    now = datetime.now()
-    yyyy_mm_dd = date.today()
-    hh_mm = time(now.hour + 1)
-    expected_end = datetime.combine(yyyy_mm_dd, hh_mm)
-
-    schedule = make_schedule(start_hour=now.hour)
-    assert schedule.period_end == expected_end
-
-
-def test_inactive_period_end():
-    now = datetime.now()
-    yyyy_mm_dd = date.today()
-    hh_mm = time(now.hour + 1)
-    expected_end = datetime.combine(yyyy_mm_dd, hh_mm)
-
-    schedule = make_schedule(start_hour=now.hour + 1)
-    assert schedule.period_end == expected_end
-
-
-def test_is_not_active_period():
-    now = datetime.now()
-    schedule = make_schedule(start_hour=now.hour + 1)
-
-    assert schedule.is_active_period() == False
-    assert schedule.minimum_temperature == 18.0
+    @freeze_time("Apr 13th, 2018 23:00")
+    def test_inactive_period_start_during(self):
+        expected_date = parse("Apr 14th, 2018 07:00:00")
+        assert schedule.inactive_period_start == expected_date
