@@ -13,3 +13,16 @@ def print_authorisation():
 
     string = "{}:{}".format(config_data['client']['client_id'], config_data['client']['client_secret'])
     print(base64.b64encode(string.encode('utf-8')))
+
+
+def record(db, controller):
+    """Records the status of the controller to the database"""
+
+    db.write("controller",
+             hold_temperature=controller.hold_temperature,
+             heating=controller.is_boiler_on,
+             active=controller.mode == 'ACTIVE',
+             inactive=controller.mode == 'INACTIVE',
+             warmup=controller.mode == 'WARMUP',
+             cooldown=controller.mode == 'COOLDOWN',
+             )

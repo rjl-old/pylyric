@@ -1,46 +1,47 @@
-import datetime
+from dateutil.parser import parse
 from sanic import Sanic, response
 from sanic.log import logger
 
+from pylyric.controller import Controller
 from pylyric.environment_sensor import EnvironmentSensor
 from pylyric.heating_system import HeatingSystem
 from pylyric.house import House
 from pylyric.influx import Influx
 from pylyric.lyric import Lyric
 from pylyric.photon import Photon
-from pylyric.recorder import Recorder
 from pylyric.schedule import Schedule
+from pylyric.utils import record
 from server.tasks import async_run_every, tasks
-
-# If LIVE is false, don't write to the database, or change the state of the heating system
-LIVE = False
-UPDATE_FREQUENCY = 10  # seconds
-
-PHOTON_DEVICE_ID = "37002b001147343438323536"
-ACTIVE_PERIOD_START = datetime.time(7, 0)
-ACTIVE_PERIOD_END = datetime.time(21, 0)
-ACTIVE_PERIOD_MINIMUM_TEMPERATURE = 20.0
-INACTIVE_PERIOD_MINIMUM_TEMPERATURE = 18.0
-INFLUX_DATABASE_NAME = "test"
-
-schedule = Schedule(
-        active_period_start=ACTIVE_PERIOD_START,
-        active_period_end=ACTIVE_PERIOD_END,
-        active_period_minimum_temperature=ACTIVE_PERIOD_MINIMUM_TEMPERATURE,
-        inactive_period_minimum_temperature=INACTIVE_PERIOD_MINIMUM_TEMPERATURE
-)
 
 app = Sanic()
 
+UPDATE_FREQUENCY = 10  # seconds
+
+ACTIVE_TEMPERATURE = 21.0
+INACTIVE_TEMPERATURE = 19.0
+ACTIVE_PERIOD_START = parse("07:00").time()
+INACTIVE_PERIOD_START = parse("21:00").time()
+schedule = Schedule(
+        active_temperature=ACTIVE_TEMPERATURE,
+        inactive_temperature=INACTIVE_TEMPERATURE,
+        active_period_start=ACTIVE_PERIOD_START,
+        inactive_period_start=INACTIVE_PERIOD_START,
+)
+
+INFLUX_DATABASE_NAME = "test"
 db = Influx(db_name=INFLUX_DATABASE_NAME)
 
+PHOTON_DEVICE_ID = "37002b001147343438323536"
 photon = Photon(device_id=PHOTON_DEVICE_ID)
+
 device = Lyric().devices[0]
+
 environment_sensor: EnvironmentSensor = photon
 heating_system: HeatingSystem = device
+
 house = House(environment_sensor=environment_sensor, heating_system=heating_system)
 
-# recorder = Recorder(database=db, measurement_name='controller', logger=logger, live=LIVE)
+controller = Controller(house=house, schedule=schedule)
 
 
 @app.route('/')
@@ -51,75 +52,14 @@ async def index(request):
 @async_run_every(seconds=UPDATE_FREQUENCY)
 def check_schedule(house: House, schedule: Schedule):
     try:
+        controller.set_heating()
+        logger.info(controller.status)
 
-        current_temperature = house.environment_sensor.internal_temperature
-
-        if schedule.is_active_period():
-
-            is_too_warm = current_temperature > schedule.active_period_minimum_temperature
-
-            status = f"ACTIVE, T:{round(current_temperature,1)}, M:{round(schedule.minimum_temperature,1)}"
-
-            if is_too_warm or house.is_time_to_cool_down(schedule):
-
-                if LIVE:
-                    house.heating_system.turn_off()
-
-                status += ", OFF"
-                status += " (COOL-DOWN)" if house.is_time_to_cool_down(schedule) else ""
-                db.write("controller",
-                         heating=False,
-                         cool_down=house.is_time_to_cool_down(schedule),
-                         cool_down_time=house.cool_down_time_mins if house.is_time_to_cool_down(schedule) else 0,
-                         warm_up=False,
-                         warm_up_time=0)
-            else:
-                if LIVE:
-                    house.heating_system.turn_on()
-
-                status += ", ON"
-                db.write("controller",
-                         heating=True,
-                         cool_down=False,
-                         cool_down_time=0,
-                         warm_up=False,
-                         warm_up_time=0)
-        else:
-
-            is_too_cold = current_temperature < schedule.inactive_period_minimum_temperature
-
-            status = f"INACTIVE, T:{round(current_temperature,1)}, M:{round(schedule.minimum_temperature,1)}"
-
-            if is_too_cold or house.is_time_to_warm_up(schedule):
-                if LIVE:
-                    house.heating_system.turn_on()
-
-                status += ", ON"
-                status += " (WARM-UP)" if house.is_time_to_warm_up(schedule) else ""
-                db.write("controller",
-                         heating=True,
-                         cool_down=False,
-                         cool_down_time=0,
-                         warm_up=house.is_time_to_warm_up(schedule),
-                         warm_up_time=house.warm_up_time_mins if house.is_time_to_warm_up(schedule) else 0)
-            else:
-                if LIVE:
-                    house.heating_system.turn_off()
-
-                status += ", OFF"
-                db.write("controller",
-                         heating=False,
-                         cool_down=False,
-                         cool_down_time=0,
-                         warm_up=False,
-                         warm_up_time=0)
-
-        db.write("controller", minimum_temperature=schedule.minimum_temperature)
-        logger.info(status)
+        record(db, controller)
 
     except Exception as e:
-
         logger.error(f"Event loop failed: {e}")
+
 
 app.add_task(check_schedule(house, schedule))
 

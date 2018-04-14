@@ -14,11 +14,12 @@ class Device(HeatingSystem, EnvironmentSensor):
     ON_TEMPERATURE = 25  # degC - arbitrary, just need 'hot'
     OFF_TEMPERATURE = 15  # degC - arbitrary, just need 'cold'
 
-    def __init__(self, json, location_id, api):
+    def __init__(self, json, location_id, api, is_active=True):
         self.device_id = json['deviceID']
         self.name = json['name']
         self.location_id = int(location_id)
         self.api = api
+        self._is_active = is_active
         self._on = None
 
     # HeatingSystem abstract function definitions
@@ -41,11 +42,21 @@ class Device(HeatingSystem, EnvironmentSensor):
                 thermostatSetpointStatus="PermanentHold"
         )
 
+    # TODO : this may be redundant
+    # @property
+    # def is_on(self) -> bool:
+    #     response = self.api.get_thermostat(location_id=self.location_id, device_id=self.device_id)
+    #     string = response.json()['operationStatus']['mode']
+    #     return True if string == 'Heat' else False
+
     @property
-    def is_on(self) -> bool:
-        response = self.api.get_thermostat(location_id=self.location_id, device_id=self.device_id)
-        string = response.json()['operationStatus']['mode']
-        return True if string == 'Heat' else False
+    def is_active(self) -> bool:
+        return self._is_active
+
+    @is_active.setter
+    def is_active(self, value):
+        self._is_active = value
+
 
     # EnvironmentSensor function definitions
 

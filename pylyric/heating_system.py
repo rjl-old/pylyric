@@ -14,5 +14,5 @@ class HeatingSystem(ABC):
 
     @property
     @abstractmethod
-    def is_on(self):
+    def is_active(self) -> bool:
         pass

@@ -19,24 +19,24 @@ class Controller:
 
     @property
     def mode(self) -> str:
-        if datetime.datetime.now() <= self.schedule.warm_up_start:
+        if datetime.datetime.now() <= self.warm_up_start:
             return "INACTIVE"
 
         elif (
-                not self.warm_up_enabled) and self.schedule.warm_up_start < datetime.datetime.now() <= self.schedule.active_period_start:
+                not self.warm_up_enabled) and self.warm_up_start < datetime.datetime.now() <= self.schedule.active_period_start:
             return "INACTIVE"
 
-        elif self.warm_up_enabled and self.schedule.warm_up_start < datetime.datetime.now() <= self.schedule.active_period_start:
+        elif self.warm_up_enabled and self.warm_up_start < datetime.datetime.now() <= self.schedule.active_period_start:
             return "WARMUP"
 
-        elif self.schedule.active_period_start < datetime.datetime.now() <= self.schedule.cool_down_start:
+        elif self.schedule.active_period_start < datetime.datetime.now() <= self.cool_down_start:
             return "ACTIVE"
 
         elif (
-                not self.cool_down_enabled) and self.schedule.cool_down_start < datetime.datetime.now() <= self.schedule.inactive_period_start:
+                not self.cool_down_enabled) and self.cool_down_start < datetime.datetime.now() <= self.schedule.inactive_period_start:
             return "ACTIVE"
 
-        elif self.cool_down_enabled and self.schedule.cool_down_start < datetime.datetime.now() <= self.schedule.inactive_period_start:
+        elif self.cool_down_enabled and self.cool_down_start < datetime.datetime.now() <= self.schedule.inactive_period_start:
             return "COOLDOWN"
 
         elif datetime.datetime.now() > self.schedule.inactive_period_start:
@@ -73,7 +73,13 @@ class Controller:
         return self.schedule.inactive_period_start - datetime.timedelta(minutes=required_minutes)
 
     @property
+    def is_boiler_on(self) -> bool:
+        return True if self.house.heating_system.is_active and self.is_too_cold else False
+
+    @property
     def status(self) -> str:
-        status = "ON " if self.is_too_cold else "OFF "
-        status += f"({self.mode}) {self.house.environment_sensor.internal_temperature} -> {self.hold_temperature}"
+        internal_temperature = round(self.house.environment_sensor.internal_temperature, 1)
+        hold_temperature = round(self.hold_temperature, 1)
+        status = "ON " if self.is_boiler_on else "OFF "
+        status += f"({self.mode}) {internal_temperature} -> {hold_temperature}"
         return str(status)
