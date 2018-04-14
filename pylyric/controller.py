@@ -22,7 +22,8 @@ class Controller:
         if datetime.datetime.now() <= self.schedule.warm_up_start:
             return "INACTIVE"
 
-        elif (not self.warm_up_enabled) and self.schedule.warm_up_start < datetime.datetime.now() <= self.schedule.active_period_start:
+        elif (
+                not self.warm_up_enabled) and self.schedule.warm_up_start < datetime.datetime.now() <= self.schedule.active_period_start:
             return "INACTIVE"
 
         elif self.warm_up_enabled and self.schedule.warm_up_start < datetime.datetime.now() <= self.schedule.active_period_start:
@@ -31,7 +32,8 @@ class Controller:
         elif self.schedule.active_period_start < datetime.datetime.now() <= self.schedule.cool_down_start:
             return "ACTIVE"
 
-        elif (not self.cool_down_enabled) and self.schedule.cool_down_start < datetime.datetime.now() <= self.schedule.inactive_period_start:
+        elif (
+                not self.cool_down_enabled) and self.schedule.cool_down_start < datetime.datetime.now() <= self.schedule.inactive_period_start:
             return "ACTIVE"
 
         elif self.cool_down_enabled and self.schedule.cool_down_start < datetime.datetime.now() <= self.schedule.inactive_period_start:
@@ -53,6 +55,22 @@ class Controller:
     @property
     def is_too_cold(self) -> bool:
         return self.house.environment_sensor.internal_temperature < self.hold_temperature
+
+    @property
+    def warm_up_start(self) -> datetime:
+        """Return the time to start heating the house to achieve the active period temperature."""
+        temperature_change = self.schedule.active_temperature - self.house.environment_sensor.internal_temperature
+        required_minutes = temperature_change / self.house.WARMUP_GRADIENT
+
+        return self.schedule.active_period_start - datetime.timedelta(minutes=required_minutes)
+
+    @property
+    def cool_down_start(self) -> datetime:
+        """Return the time to start cooling the house to achieve the inactive period temperature."""
+        temperature_change = self.schedule.inactive_temperature - self.house.environment_sensor.internal_temperature
+        required_minutes = temperature_change / self.house.COOLDOWN_GRADIENT
+
+        return self.schedule.inactive_period_start - datetime.timedelta(minutes=required_minutes)
 
     @property
     def status(self) -> str:

@@ -22,10 +22,12 @@ schedule.inactive_temperature = 19.0
 controller = Controller(house=house, schedule=schedule)
 
 test_date = parse("Apr 13th, 2018 00:00:00")
-schedule.warm_up_start = test_date + datetime.timedelta(hours=5)
 schedule.active_period_start = test_date + datetime.timedelta(hours=8)
-schedule.cool_down_start = test_date + datetime.timedelta(hours=16)
 schedule.inactive_period_start = test_date + datetime.timedelta(hours=22)
+
+# TODO: THESE ARE WRONG: CONTROLLER NOW PROVIDES .warm_up_start and .cool_down_start
+schedule.warm_up_start = test_date + datetime.timedelta(hours=5)
+schedule.cool_down_start = test_date + datetime.timedelta(hours=16)
 
 
 class TestModeMock:
@@ -272,3 +274,22 @@ class TestStatus:
     def test_cooldown_disabled_not_too_cold(self):
         house.environment_sensor.internal_temperature = schedule.inactive_temperature + 1
         assert controller.status == 'OFF (INACTIVE) 20.0 -> 19.0'
+
+
+class TestControllerWarmUpCoolDown:
+
+    @freeze_time("Apr 13th, 2018 01:00")
+    def test_warm_up_start(self):
+        house.environment_sensor.internal_temperature = schedule.active_temperature - 1
+        minutes = 1.0 / house.WARMUP_GRADIENT
+        expected_start_time = schedule.active_period_start - datetime.timedelta(minutes=minutes)
+
+        assert controller.warm_up_start == expected_start_time
+
+    @freeze_time("Apr 13th, 2018 12:00")
+    def test_cool_down_start(self):
+        house.environment_sensor.internal_temperature = schedule.inactive_temperature + 1
+        minutes = -1.0 / house.COOLDOWN_GRADIENT
+        expected_start_time = schedule.inactive_period_start - datetime.timedelta(minutes=minutes)
+
+        assert controller.cool_down_start == expected_start_time
