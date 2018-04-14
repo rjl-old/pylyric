@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta
 class Schedule:
     """Represents a heating schedule.
 
-       A schedule is an active, an inactive period, and temperature.
+       A schedule is an active start time and temperature, and an inactive start time and temperature.
     """
 
     def __init__(self,
