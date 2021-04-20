@@ -16,7 +16,7 @@ Jinja2==2.10
 MarkupSafe==1.0
 more-itertools==4.1.0
 pluggy==0.6.0
-py==1.5.3
+py==1.10.0
 -e git+https://richardjlyon@github.com/richardjlyon/pylyric.git@53abdc9de1851a8ab94e305cd3df833aa6af1ddc#egg=pylyric
 PyScaffold==3.0.1
 pytest==3.5.0
