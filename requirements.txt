@@ -23,7 +23,7 @@ pytest==3.5.0
 python-dateutil==2.7.2
 pytz==2018.3
 requests==2.20.0
-sanic==0.7.0
+sanic==20.12.6
 six==1.11.0
 tortilla==0.4.3
 ujson==1.35
