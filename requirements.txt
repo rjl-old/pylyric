@@ -26,7 +26,7 @@ requests==2.20.0
 sanic==0.7.0
 six==1.11.0
 tortilla==0.4.3
-ujson==1.35
+ujson==5.4.0
 urllib3==1.24.2
 uvloop==0.9.1
 websockets==5.0
