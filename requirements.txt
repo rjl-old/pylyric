@@ -22,7 +22,7 @@ PyScaffold==3.0.1
 pytest==3.5.0
 python-dateutil==2.7.2
 pytz==2018.3
-requests==2.20.0
+requests==2.31.0
 sanic==20.12.7
 six==1.11.0
 tortilla==0.4.3
