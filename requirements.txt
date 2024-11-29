@@ -27,7 +27,7 @@ sanic==20.12.7
 six==1.11.0
 tortilla==0.4.3
 ujson==5.4.0
-urllib3==1.26.18
+urllib3==1.26.19
 uvloop==0.9.1
 websockets==9.1
 Werkzeug==3.0.3
